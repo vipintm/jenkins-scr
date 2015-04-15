@@ -1,5 +1,5 @@
 # jenkins-scr
-Jenkins build scripts.
+Jenkins scripts.
 
-## 1) antidote : 
-Scripts for SyncFree antidote riak_test ( https://github.com/SyncFree/antidote | https://github.com/SyncFree/riak_test)
+## antidote/ 
+Jenkins scripts for antidote riak tests ( https://github.com/SyncFree/antidote | https://github.com/SyncFree/riak_test)
