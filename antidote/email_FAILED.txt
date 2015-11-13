@@ -1,0 +1,43 @@
+- $ft_blame_email, cc:vipintm@gmail.com, cc:alejandro.tomsic@lip6.fr, cc:bieniusa@cs.uni-kl.de, cc:mars.leezm@gmail.com, cc:tyler.crain@lip6.fr, cc:deepthidevaki@gmail.com
+- $ft_blame_email, vipintm@gmail.com, alejandro.tomsic@lip6.fr, bieniusa@cs.uni-kl.de, mars.leezm@gmail.com, tyler.crain@lip6.fr, deepthidevaki@gmail.com
+- $BUILD_DISPLAY_NAME : riak test for antidote $antidote_branch branch is $ft_BUILD_RESULT ($ft_thisBuildCount)
+-
+# Summary
+Result : $build_exit_code
+$ft_thisBuild
+$ft_RedAlert
+
+# antidote riak test
+Total tests      : $test_cnt
+Test passed   : $test_pass_cnt
+Test failed      : $test_failed_cnt
+Failed tests    : $test_failed_name
+
+# antidote
+Branch           : $antidote_branch
+Commit          : https://github.com/SyncFree/antidote/commit/$antidote_GIT_COMMIT
+Code change : $antidote_branch_changed ( from last successful test )
+Success code: $lastKnownGitAs ( Last known successful test code for this branch )
+$ft_antidote_change_log
+Test status     : $antidote_branch_history
+Build               : $antidote_BUILD_NUMBER ( $antidote_BUILD_URL )
+Success build : $lastKnownBuild ( Last known successful test for this branch ) 
+ 
+# riak_test
+Branch           : $riak_branch
+Commit          : https://github.com/SyncFree/riak_test/commit/$riak_GIT_COMMIT
+Code change : $riak_branch_changed ( from last successful test )
+$ft_riak_change_log
+Test status     : $riak_branch_history
+Build              : $riak_BUILD_NUMBER ( $riak_BUILD_URL )
+
+# Test Notes
+$dev_message
+
+# Attachments
+Full jenkins run log : build.log 
+Test errors : test_error_logs.txt 
+Concatenated ~/rt/antidote/current/dev/*/log/*.*  : dev_logs.txt
+git log ( max last 5 | from last successful tested point)  : antidote_git_change_log.txt, riak_git_change_log.txt
+
+- ft_send/*.txt

@@ -1,0 +1,4 @@
+- vipintm@gmail.com, alejandro.tomsic@lip6.fr, cc:bieniusa@cs.uni-kl.de, cc:mars.leezm@gmail.com, cc:tyler.crain@lip6.fr, cc:deepthidevaki@gmail.com
+- vipintm@gmail.com, alejandro.tomsic@lip6.fr, bieniusa@cs.uni-kl.de, mars.leezm@gmail.com, tyler.crain@lip6.fr, deepthidevaki@gmail.com
+- $BUILD_DISPLAY_NAME :  riak test for antidote is ABORTED
+- $PROJECT_DEFAULT_CONTENT

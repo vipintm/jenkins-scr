@@ -1,0 +1,2 @@
+$WORKSPACE/antidote/antidote_env.properties
+$WORKSPACE/riak_test/riak_env.properties

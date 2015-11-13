@@ -1,0 +1,2 @@
+$WORKSPACE/envpro/general.properties
+$WORKSPACE/envpro/ft_build.properties
