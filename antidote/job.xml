@@ -1,0 +1,1430 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>antidote riak tests</description>
+  <logRotator class="hudson.tasks.LogRotator">
+    <daysToKeep>-1</daysToKeep>
+    <numToKeep>20</numToKeep>
+    <artifactDaysToKeep>1</artifactDaysToKeep>
+    <artifactNumToKeep>-1</artifactNumToKeep>
+  </logRotator>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.security.AuthorizationMatrixProperty>
+      <permission>hudson.model.Item.Read:anonymous</permission>
+      <permission>hudson.model.Item.Discover:anonymous</permission>
+      <permission>hudson.model.Item.Workspace:anonymous</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <org.jvnet.jenkins.plugins.nodelabelparameter.NodeParameterDefinition plugin="nodelabelparameter@1.5.1">
+          <name></name>
+          <description></description>
+          <allowedSlaves>
+            <string>shango</string>
+          </allowedSlaves>
+          <defaultSlaves>
+            <string>shango</string>
+          </defaultSlaves>
+          <triggerIfResult>multiSelectionDisallowed</triggerIfResult>
+          <allowMultiNodeSelection>false</allowMultiNodeSelection>
+          <triggerConcurrentBuilds>false</triggerConcurrentBuilds>
+          <ignoreOfflineNodes>false</ignoreOfflineNodes>
+          <nodeEligibility class="org.jvnet.jenkins.plugins.nodelabelparameter.node.AllNodeEligibility"/>
+        </org.jvnet.jenkins.plugins.nodelabelparameter.NodeParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>true</blockBuildWhenUpstreamBuilding>
+  <authToken>flopybuild</authToken>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+# requirment test -0
+if [ -z $WORKSPACE ] || [ -z $HOME ]
+then
+	echo &quot;Required support not found, exiting ...&quot;
+    exit 1
+fi
+
+code_histroy=&quot;$HOME/.code_histroy&quot;
+
+
+#clean old files
+if [ -d $WORKSPACE/riak_test ]
+then
+	echo &quot;Cleaning old riak_test ...&quot;
+	rm -rf $WORKSPACE/riak_test
+fi
+if [ -d $WORKSPACE/antidote ]
+then
+	echo &quot;Cleaning old antidote ...&quot;
+	rm -rf $WORKSPACE/antidote
+fi
+
+</command>
+    </hudson.tasks.Shell>
+    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.36.1">
+      <project>riak_test</project>
+      <filter>**</filter>
+      <target>riak_test</target>
+      <excludes></excludes>
+      <selector class="hudson.plugins.copyartifact.TriggeredBuildSelector">
+        <fallbackToLastSuccessful>true</fallbackToLastSuccessful>
+        <upstreamFilterStrategy>UseNewest</upstreamFilterStrategy>
+      </selector>
+      <doNotFingerprintArtifacts>false</doNotFingerprintArtifacts>
+    </hudson.plugins.copyartifact.CopyArtifact>
+    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.36.1">
+      <project>antidote</project>
+      <filter>**</filter>
+      <target>antidote</target>
+      <excludes></excludes>
+      <selector class="hudson.plugins.copyartifact.TriggeredBuildSelector">
+        <fallbackToLastSuccessful>true</fallbackToLastSuccessful>
+        <upstreamFilterStrategy>UseNewest</upstreamFilterStrategy>
+      </selector>
+      <doNotFingerprintArtifacts>false</doNotFingerprintArtifacts>
+    </hudson.plugins.copyartifact.CopyArtifact>
+    <EnvInjectBuilder plugin="envinject@1.92.1">
+      <info>
+        <propertiesFilePath>$WORKSPACE/antidote/antidote_env.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <EnvInjectBuilder plugin="envinject@1.92.1">
+      <info>
+        <propertiesFilePath>$WORKSPACE/riak_test/riak_env.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+# paths
+export PATH=/usr/local/Cellar/erlang/R16B02/bin:$PATH
+
+# misc
+log_sep=&quot;---------------------------------------------&quot;
+
+# Messages
+error_cc=&quot;Unable to get Code change information&quot;
+error_parse=&quot;Unable to Parse&quot;
+error_na=&quot;NA&quot;
+error_email=&quot;vipintm@gmail.com&quot; # debug email id
+ft_cc_email=&quot;vipintm@gmail.com,alejandro.tomsic@lip6.fr,bieniusa@cs.uni-kl.de,mars.leezm@gmail.com,tyler.crain@lip6.fr,akkoorath@cs.uni-kl.de&quot;
+numre=&apos;^[0-9]+$&apos;
+
+# files
+riakbin=&quot;$WORKSPACE/riak_test/riak_test&quot;
+test_cases=&quot;$WORKSPACE/antidote/riak_test/*.erl&quot;
+antidote_bin=&quot;$HOME/rt/antidote/current/dev/dev*/bin/antidote&quot;
+riak_configf=&quot;$HOME/.riak_test.config&quot;
+git_prv_key=&quot;$HOME/.git.prv.dsa&quot;
+git_pub_key=&quot;$HOME/.git.pub.dsa&quot;
+antidote_current=&quot;$WORKSPACE/antidote/riak_test/bin/antidote-current.sh&quot;
+antidote_setup=&quot;$WORKSPACE/antidote/riak_test/bin/antidote-setup.sh&quot;
+code_histroy=&quot;$HOME/.code_histroy&quot;
+# Property Files 
+exportPopertyFile=&quot;$WORKSPACE/envpro/general.properties&quot;
+exportBuildFile=&quot;$WORKSPACE/envpro/ft_build.properties&quot;
+
+# exit 1
+echo &quot;ft_BUILD_RESULT=ABORTED&quot; &gt; $exportBuildFile
+echo &quot;ft_BUILD_NUMBER=$BUILD_NUMBER&quot; &gt;&gt; $exportBuildFile
+
+# Vars
+is_timeout=0
+is_perl=0
+is_awk=0
+is_sed=0
+is_erl=0
+is_erlc=0
+is_git=0
+is_grep=0
+is_java=0
+riak_changed=0
+antidote_changed=0
+test_pass_cnt=0
+test_failed_cnt=0
+test_cnt=0
+declare -a failed_fns
+declare -a failed_errors
+declare -a ft_fuc_errors
+
+# git max log
+git_max_log=&quot;15&quot;
+# Time out
+max_time=3600 #in seconds
+# dev nos
+default_dev_nos=6 #default
+dev_nos=6 
+mak_dev_nos=6
+conf_dev_nos=0
+
+# requirment test -1
+if type &quot;timeout&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+	is_timeout=1
+    #timeout --version
+fi
+if type &quot;perl&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+    is_perl=1
+    perl --version
+fi
+if type &quot;awk&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+    is_awk=1
+    #awk --version
+fi
+if type &quot;sed&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+    is_sed=1
+    #sed --version
+fi
+if type &quot;erl&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+	is_erl=1
+    erl -version
+fi
+if type &quot;erlc&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+	is_erlc=1
+fi
+if type &quot;git&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+	is_git=1
+    git --version
+fi
+if type &quot;grep&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+	is_grep=1
+    #grep --version
+fi
+if type &quot;java&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+	is_java=1
+    java -version
+fi
+
+# min req.
+if [ -z $WORKSPACE ] || [ -z $HOME ] || [ &quot;$is_sed&quot; -eq 0 ] \
+	|| [ &quot;$is_erl&quot; -eq 0 ] || [ &quot;$is_erlc&quot; -eq 0 ] \
+    || [ &quot;$is_grep&quot; -eq 0 ] #do we need sed ?
+then
+	echo &quot;Required support (minimum) not found, exiting ...&quot;
+    exit 1
+fi
+if [ -d $WORKSPACE ] &amp;&amp; [ -d $HOME ] \
+    &amp;&amp; [ -d $WORKSPACE/riak_test ] \
+    &amp;&amp; [ -d $WORKSPACE/antidote ]
+then
+	echo &quot;&quot;
+	echo $log_sep
+else
+	echo &quot;Required support (Paths) not found, exiting ...&quot;
+    exit 1
+fi
+
+# select time 
+if [ &quot;$is_timeout&quot; -eq 1 ]; then
+	echo &quot;Using bash timeout function ...&quot;
+	function alarm() { timeout &quot;$@&quot;; }
+    echo &quot;Using date for local time function ...&quot;
+    function local_time_fn() { date; }    
+elif [ &quot;$is_perl&quot; -eq 1 ] ; then
+	echo &quot;Using perl script for timeout function ...&quot;
+	function alarm() { perl -e &apos;alarm shift; exec @ARGV&apos; &quot;$@&quot;; }
+    echo &quot;Using perl script for local time function ...&quot;
+    function local_time_fn() { perl -MPOSIX -le &apos;print strftime &quot;%D %T&quot;, localtime $^T&apos;; }
+else
+	echo &quot;Time out support not found ...&quot;
+    echo &quot;WARNING : The test will run as log the Jenkins KILLs it ...&quot;
+    function alarm() { bash &quot;${@:2}&quot;; }
+    echo &quot;WARNING : Using a dummy time ...&quot;
+    function local_time_fn() { echo &quot;Di 10. Nov 17:28:23 CET 2015&quot;; }
+fi
+
+# timer
+function timer()
+{
+    if [[ $# -eq 0 ]]; then
+        echo $(date &apos;+%s&apos;)
+    else
+        local  stime=$1
+        etime=$(date &apos;+%s&apos;)
+
+        if [[ -z &quot;$stime&quot; ]]; then stime=$etime; fi
+
+        dt=$((etime - stime))
+        printf &apos;%d&apos; $dt
+    fi
+}
+
+# clean old dev&apos;s
+function clean_dev()
+{
+	echo &quot;Clearing all old dev&apos;s ....&quot; 
+	for dev_bin in $(ls -1 $antidote_bin); do
+		is_antinode_up=$($dev_bin ping 2&gt;/dev/null \
+        | grep &quot;pong&quot; | wc -l | sed &apos;s/^ *//g&apos;)
+    	if [ &quot;$is_antinode_up&quot; -eq 1  ]
+    	then
+    		echo &quot;$dev_bin -&quot;
+            echo &quot;is up, stoping it ...&quot;
+    		$dev_bin stop
+    	fi
+	done
+}
+
+# git key file
+function gen_git_prv_key()
+{
+  echo &quot;Creating/Updating git deploy prv key ..&quot;
+  cat &gt; $git_prv_key &lt;&lt; EOL
+-----BEGIN DSA PRIVATE KEY-----
+MIIBvAIBAAKBgQDZd+UKa8xy1oZ+hvps9HeBVwe9NTBU03JDFYmh9sUmpfEggvRZ
+BIlb+MqY/rUQRq4D9BQyiS9IahP/iArPHOy5Inj8b+ryUwpBE7N+uxThyjIGThpg
+roByP3WAZwiX0BWaN2wTYsfz7HBkoyJrbBzmzLQOhuXcNz/C4BWqnK1lVwIVANsV
+VXMY/c9icdq4PZhQwb1pd2TDAoGBAKnv/j97wmzR06HFD9WHXTwstoXqk9060Sqt
+XPDhUJ1+WOW+ovoxsdgzX6MnPTEH4QI/3BedUazSJFPajI35+V38tQEqIkBS8YnP
+F6QI/Je6SEnu0nzzSnrF2c1zcmDrsttv1Df8oijDeEYppMkWvVE/PsiDgFkIilJr
+UacUw9IDAoGAedzp1fYfpX4eBuVSGaJpHYWs58LMJuvVTV3Y22kcyFrsohtbJXFC
+7cB12YaSkcDuc0alkdeCedXDT4K7xpIXS0iwxfYyRjuP1k9f2Lwc0Dn7h8qwnGb6
+d3BmhbRKbrBB9BSHwaw4YJE6Xge1gmzqwQgLuFHuT/0ooJpd3NMFHrwCFQDQNUBT
+G/6e/WjiC+pDTQ9CtJiKJw==
+-----END DSA PRIVATE KEY-----
+EOL
+}
+
+# git key file
+function gen_git_pub_key()
+{
+  echo &quot;Creating/Updating git deploy pub key ..&quot;
+  cat &gt; $git_prv_key &lt;&lt; EOL
+ssh-dss AAAAB3NzaC1kc3MAAACBANl35QprzHLWhn6G+mz0d4FXB701MFTTckMVia\
+H2xSal8SCC9FkEiVv4ypj+tRBGrgP0FDKJL0hqE/+ICs8c7LkiePxv6vJTCkETs367\
+FOHKMgZOGmCugHI/dYBnCJfQFZo3bBNix/PscGSjImtsHObMtA6G5dw3P8LgFaqcrW\
+VXAAAAFQDbFVVzGP3PYnHauD2YUMG9aXdkwwAAAIEAqe/+P3vCbNHTocUP1YddPCy2\
+heqT3TrRKq1c8OFQnX5Y5b6i+jGx2DNfoyc9MQfhAj/cF51RrNIkU9qMjfn5Xfy1AS\
+oiQFLxic8XpAj8l7pISe7SfPNKesXZzXNyYOuy22/UN/yiKMN4RimkyRa9UT8+yIOA\
+WQiKUmtRpxTD0gMAAACAedzp1fYfpX4eBuVSGaJpHYWs58LMJuvVTV3Y22kcyFrsoh\
+tbJXFC7cB12YaSkcDuc0alkdeCedXDT4K7xpIXS0iwxfYyRjuP1k9f2Lwc0Dn7h8qw\
+nGb6d3BmhbRKbrBB9BSHwaw4YJE6Xge1gmzqwQgLuFHuT/0ooJpd3NMFHrw= Jenkins
+
+EOL
+
+git_ssh_key=&quot;ssh-dss AAAAB3NzaC1kc3MAAACBANl35QprzHLWhn6G+mz0d4FXB\
+701MFTTckMVia\
+H2xSal8SCC9FkEiVv4ypj+tRBGrgP0FDKJL0hqE/+ICs8c7LkiePxv6vJTCkETs367\
+FOHKMgZOGmCugHI/dYBnCJfQFZo3bBNix/PscGSjImtsHObMtA6G5dw3P8LgFaqcrW\
+VXAAAAFQDbFVVzGP3PYnHauD2YUMG9aXdkwwAAAIEAqe/+P3vCbNHTocUP1YddPCy2\
+heqT3TrRKq1c8OFQnX5Y5b6i+jGx2DNfoyc9MQfhAj/cF51RrNIkU9qMjfn5Xfy1AS\
+oiQFLxic8XpAj8l7pISe7SfPNKesXZzXNyYOuy22/UN/yiKMN4RimkyRa9UT8+yIOA\
+WQiKUmtRpxTD0gMAAACAedzp1fYfpX4eBuVSGaJpHYWs58LMJuvVTV3Y22kcyFrsoh\
+tbJXFC7cB12YaSkcDuc0alkdeCedXDT4K7xpIXS0iwxfYyRjuP1k9f2Lwc0Dn7h8qw\
+nGb6d3BmhbRKbr\
+BB9BSHwaw4YJE6Xge1gmzqwQgLuFHuT/0ooJpd3NMFHrw= Jenkins&quot;
+}
+
+# riak config file
+function gen_riak_config()
+{
+  if [ -f $riak_configf ]
+  then
+      echo &quot;The riak test config file found&quot;
+      cat $riak_configf
+      echo &quot;&quot;
+  else
+      echo &quot;Creating/Updating the riak test config file($dev_nos) ..&quot;
+  cat &gt; $riak_configf &lt;&lt; EOL
+{default, [
+    {platform, &quot;osx-64&quot;},
+    {rt_max_wait_time, 600000},
+    {rt_retry_delay, 1000},
+    {rt_harness, rtdev},
+    {rt_scratch_dir, &quot;/tmp/riak_test_scratch&quot;},
+    {basho_bench, &quot;/Users/cmeiklejohn/Basho/basho_bench&quot;},
+    {load_workers, 10},
+    {lager_level, info}
+]}.
+{antidote, [
+    {rt_project, &quot;antidote&quot;},
+    {cluster_a_size, 3},
+    {num_nodes, $dev_nos},
+    {exec_name, &quot;antidote&quot;},
+    {rt_cookie, antidote},
+    {test_paths, [&quot;$WORKSPACE/antidote/riak_test/ebin&quot;]},
+    {rtdev_path, [{root, &quot;$HOME/rt/antidote&quot;},
+                  {current, &quot;$HOME/rt/antidote/current&quot;}]}
+]}.
+
+{intercept_example,
+ [
+  {load_intercepts, true},
+  {intercepts,
+   [
+    {riak_kv_vnode, [{{put,7}, dropped_put}]}
+   ]}
+ ]}.
+EOL
+
+      cat $riak_configf
+      echo &quot;&quot;
+	fi
+
+}
+
+# dir chmod
+function set_path_chmod()
+{
+	chmod -R 755 $WORKSPACE/riak_test
+	chmod -R 755 $WORKSPACE/antidote
+}
+
+# clean old files
+function clean_old_logs()
+{
+	if [ -d $WORKSPACE/utest ]; then
+		echo &quot;Clearing old test result temp files ...&quot;
+    	rm -rf $WORKSPACE/utest/*.xml
+	else
+		echo &quot;Creating test result temp dir ...&quot;
+		mkdir $WORKSPACE/utest
+	fi
+
+	if [ -d $WORKSPACE/tlog ]; then
+		echo &quot;Clearing old temp logs ...&quot;
+    	rm -rf $WORKSPACE/tlog/*.log
+	else
+		echo &quot;Creating temp logs dir ...&quot;
+		mkdir $WORKSPACE/tlog
+	fi
+
+	if [ -d $WORKSPACE/envpro ]; then
+		echo &quot;Clearing old env files ...&quot;
+    	rm -rf $WORKSPACE/envpro/*.properties
+	else
+		echo &quot;Creating send dir ...&quot;
+		mkdir $WORKSPACE/envpro
+	fi
+	if [ -d $WORKSPACE/ft_send ]; then
+		echo &quot;Clearing old send files ...&quot;
+    	rm -rf $WORKSPACE/ft_send/*.txt
+	else
+		echo &quot;Creating env dir ...&quot;
+		mkdir $WORKSPACE/ft_send
+	fi 
+	if [ -d $WORKSPACE/ft_bin ]; then
+		echo &quot;Clearing old bin files ...&quot;
+    	rm -rf $WORKSPACE/ft_bin/*.*
+	else
+		echo &quot;Creating bin dir ...&quot;
+		mkdir $WORKSPACE/ft_bin
+	fi     
+    # exit 1
+	echo &quot;ft_BUILD_RESULT=FAILED&quot; &gt; $exportBuildFile
+	echo &quot;ft_BUILD_NUMBER=$BUILD_NUMBER&quot; &gt;&gt; $exportBuildFile
+}
+
+function get_jenkins_cli()
+{
+
+	if [ &quot;$is_java&quot; -eq 0 ] 
+	then
+		echo &quot;Java not found ...&quot;
+	else
+    	cd $WORKSPACE/ft_bin/
+		wget http://jenkins.lip6.fr/jnlpJars/jenkins-cli.jar
+		java -jar jenkins-cli.jar -s http://jenkins.lip6.fr/ who-am-i
+        cd $WORKSPACE
+    fi
+}
+
+
+# Collect time
+SDATE=$(local_time_fn)
+echo &quot;build_time=$SDATE&quot; &gt;&gt; $exportPopertyFile
+echo &quot;git_max_log=$git_max_log&quot; &gt;&gt; $exportPopertyFile
+
+gen_git_prv_key
+gen_git_pub_key
+
+get_jenkins_cli
+
+set_path_chmod
+
+clean_old_logs
+
+# setup antinode
+cd $WORKSPACE/antidote/ # Nevr remove this the script need 
+			  			# to run inside antidote dir
+if [ -d $HOME/rt ]; then
+	echo &quot;Updating with antidote current ...&quot;
+    if [ -f $antidote_current ]
+    then
+    	$antidote_current
+    else
+    	echo &quot;Unable to read $antidote_current ..&quot;
+        echo &quot;ft_BUILD_RESULT=ABORTED&quot; &gt; $exportBuildFile
+		echo &quot;ft_BUILD_NUMBER=$BUILD_NUMBER&quot; &gt;&gt; $exportBuildFile
+        echo &quot;build_exit_code=Unable to read $antidote_current&quot; &gt;&gt; $exportPopertyFile
+        exit 1
+    fi
+else
+	echo &quot;Creating antidote setup ...&quot;
+    if [ -f $antidote_setup ]
+    then
+    	mkdir $HOME/rt
+    	$antidote_setup
+    else
+    	echo &quot;Unable to read $antidote_setup ..&quot;
+        echo &quot;ft_BUILD_RESULT=ABORTED&quot; &gt; $exportBuildFile
+		echo &quot;ft_BUILD_NUMBER=$BUILD_NUMBER&quot; &gt;&gt; $exportBuildFile
+        echo &quot;build_exit_code=Unable to read $antidote_setup&quot; &gt;&gt; $exportPopertyFile        
+        exit 1
+    fi
+fi
+
+# create link to rt
+if [ -d $WORKSPACE/rt_link ]
+then
+	echo &quot;rt link is present ...&quot;
+else
+	echo &quot;Linking rt for web access ...&quot;
+	rm $WORKSPACE/rt_link 2&gt; /dev/null
+	ln -s $HOME/rt $WORKSPACE/rt_link
+fi
+rt_dev_loc=&quot;$HOME/rt/antidote/current/dev&quot;
+echo &quot; &quot; &gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+
+# dir chmod
+chmod -R 755 $HOME/rt
+
+# requirment test -2
+if [ -f &quot;$riakbin&quot; ] 
+then
+    echo &quot;Found antidote bin in place ...&quot;
+else
+	echo &quot;Required support (antidote bin) not found, exiting ...&quot;
+    echo &quot;ft_BUILD_RESULT=ABORTED&quot; &gt; $exportBuildFile
+	echo &quot;ft_BUILD_NUMBER=$BUILD_NUMBER&quot; &gt;&gt; $exportBuildFile
+    echo &quot;build_exit_code=Required support (antidote bin) not found, exiting&quot; &gt;&gt; $exportPopertyFile    
+    exit 1
+fi
+
+# Get branch info
+#
+riak_HEAD_old=&quot;$error_na&quot;
+riak_HEAD=$(cat $WORKSPACE/riak_test/.git/HEAD)
+riak_name=$(cat $WORKSPACE/riak_test/.git/FETCH_HEAD | grep -w &quot;$riak_HEAD&quot; | cut -d&quot;&apos;&quot; -f2)
+echo &quot;Using riak_test branch : $riak_name&quot;
+if [ -d $code_histroy/riak_test/$riak_name ]
+then
+	if [ -f $code_histroy/riak_test/$riak_name/sHEAD ]
+	then
+    	riak_branch_history=&quot;Found a sucessfull test with this riak branch&quot;
+  		riak_HEAD_old=$(cat $code_histroy/riak_test/$riak_name/sHEAD 2&gt;/dev/null)
+    else
+    	riak_branch_history=&quot;Not Found a sucessfull test with this riak branch&quot;
+	fi
+else
+	riak_branch_history=&quot;Running first time with this branch&quot;
+	mkdir -p $code_histroy/riak_test/$riak_name
+fi
+echo &quot;$riak_branch_history ...&quot;
+
+echo &quot;riak_branch=$riak_name&quot; &gt;&gt; $exportPopertyFile
+echo &quot;riak_branch_history=$riak_branch_history&quot; &gt;&gt; $exportPopertyFile
+
+#
+antidote_HEAD_old=&quot;$error_na&quot;
+antidote_HEAD=$(cat $WORKSPACE/antidote/.git/HEAD)
+antidote_name=$(cat $WORKSPACE/antidote/.git/FETCH_HEAD | grep -w &quot;$antidote_HEAD&quot; | cut -d&quot;&apos;&quot; -f2)
+echo &quot;Using antidote branch : $antidote_name&quot;
+if [ -d $code_histroy/antidote/$antidote_name ]
+then
+	if [ -f $code_histroy/antidote/$antidote_name/sHEAD ]
+	then
+    	antidote_branch_history=&quot;Found a sucessfull test with this antidote branch&quot;
+   		antidote_HEAD_old=$(cat $code_histroy/antidote/$antidote_name/sHEAD 2&gt;/dev/null)
+    else
+    	antidote_branch_history=&quot;Not Found a sucessfull test with this antidote branch&quot;
+	fi
+else
+	antidote_branch_history=&quot;Running first time with this branch&quot;
+	mkdir -p $code_histroy/antidote/$antidote_name
+fi
+echo &quot;$antidote_branch_history ...&quot;
+
+echo &quot;antidote_branch=$antidote_name&quot; &gt;&gt; $exportPopertyFile
+echo &quot;antidote_branch_history=$antidote_branch_history&quot; &gt;&gt; $exportPopertyFile
+
+# requirment test -3
+is_antidote_bin=$(ls -1 $antidote_bin 2&gt;/dev/null \
+	| wc -l | sed &apos;s/^ *//g&apos;)
+# find the dev no
+if [ -f $WORKSPACE/antidote/Makefile ] ; then
+	mak_dev_nos=$(cat $WORKSPACE/antidote/Makefile | grep -e ^DEVNODES | cut -d&quot;=&quot; -f2 | sed &apos;s/^ *//g&apos;)
+    echo &quot;Dev nos in antidote Makefile : $mak_dev_nos&quot;
+else
+	echo &quot;Unable to read Makefile ...&quot;
+    echo &quot;Considring mak_dev_nos = default_dev_nos ..&quot;
+    mak_dev_nos=$default_dev_nos
+fi
+if [ -f $riak_configf ] ; then
+	conf_dev_nos=$(cat $riak_configf | grep &quot;{num_nodes&quot; | cut -d&quot;,&quot; -f2 | cut -d&quot;}&quot; -f1 | sed &apos;s/^ *//g&apos;)
+    echo &quot;Dev nos in riak conffile     : $conf_dev_nos&quot;
+else
+	# taking 999 to regenarate config file
+	conf_dev_nos=999
+fi
+#
+if [ &quot;$mak_dev_nos&quot; -lt &quot;$default_dev_nos&quot; ]
+then
+    dev_message=&quot;The test is run with less dev nos $mak_dev_nos than default $default_dev_nos&quot;
+    echo &quot;WARNING : $dev_message ...&quot;
+else
+	dev_message=&quot;.&quot;
+fi
+#
+if [ &quot;$is_antidote_bin&quot; -ge &quot;$mak_dev_nos&quot; ]
+then
+	echo &quot;Found antidote dev nodes ( $is_antidote_bin ) ...&quot;
+else
+	echo &quot;Not found antidote devs ...&quot;
+    exit 1
+fi
+#
+if [ &quot;$conf_dev_nos&quot; -eq &quot;$mak_dev_nos&quot; ]
+then
+	echo &quot;Required dev nos found in riak config file ...&quot;
+else
+	echo &quot;Required dev nos not found in riak config file ...&quot;
+	dev_nos=$mak_dev_nos
+	if [ -f &quot;$riak_configf&quot; ]
+	then
+		rm -f $riak_configf
+	fi
+	gen_riak_config
+	if [ -f &quot;$riak_configf&quot; ]
+	then
+		echo &quot;Updated Dev nos in configfile with $mak_dev_nos ...&quot;
+	else
+		echo &quot;Problem in updating configfile ...&quot;
+    	echo &quot;ft_BUILD_RESULT=ABORTED&quot; &gt; $exportBuildFile
+		echo &quot;ft_BUILD_NUMBER=$BUILD_NUMBER&quot; &gt;&gt; $exportBuildFile
+    	echo &quot;build_exit_code=Problem in updating configfile&quot; &gt;&gt; $exportPopertyFile         
+        # without config file test will not run - don&apos;t remove
+		exit 1
+	fi
+fi
+
+echo &quot;mak_dev_nos=$mak_dev_nos&quot; &gt;&gt; $exportPopertyFile
+echo &quot;default_dev_nos=$default_dev_nos&quot; &gt;&gt; $exportPopertyFile
+echo &quot;is_antidote_bin=$is_antidote_bin&quot; &gt;&gt; $exportPopertyFile
+echo &quot;conf_dev_nos=$conf_dev_nos&quot; &gt;&gt; $exportPopertyFile
+echo &quot;dev_message=$dev_message&quot; &gt;&gt; $exportPopertyFile
+
+# clean old dev&apos;s
+clean_dev
+
+##### test loop
+for file_test in $(grep -l confirm/0 $test_cases 2&gt;/dev/null)
+do
+    fn_test=$(basename $file_test .erl)
+     
+	# local vars
+    t=0
+    test_fail=0
+    test_pass=0
+    
+    # default messages
+    fail_message=&quot;$fn_test Failed&quot;
+    fail_type=&quot;Unknown&quot;
+    error_message=&quot;Error in $fn_test&quot;
+    error_type=&quot;Unknown&quot;
+    
+    # local files
+    test_logf=&quot;$WORKSPACE/tlog/$fn_test.log&quot;
+    utest_file=&quot;$WORKSPACE/utest/Test-&quot;$fn_test&quot;.xml&quot;
+
+	test_cnt=$((test_cnt+1))
+
+	# Test exec
+    echo &quot;&quot;
+    echo $log_sep
+    echo &quot;$test_cnt) Test : $fn_test&quot;
+    echo &quot;&quot;
+    
+    echo &quot;$riakbin -v -c antidote -t $fn_test&quot;
+    echo &quot;&quot;
+    t=$(timer)
+    
+    # Keep this as single line
+	alarm $max_time $riakbin -v -c antidote -t $fn_test 2&gt;&amp;1 | tee -a $test_logf
+       
+    time_sec=$(timer $t)
+    echo &quot;&quot;
+    echo $log_sep
+    
+    # Test result processing
+    echo &quot;Time taken for $fn_test (seconds) :$time_sec&quot;
+     
+    if [ -f $test_logf ]
+    then
+    	echo &quot;Processing Test result ...&quot;
+    	test_pass=$(cat $test_logf 2&gt;/dev/null \
+        	| grep &quot;$fn_test-error: pass&quot; | wc -l | sed &apos;s/^ *//g&apos;)
+     	test_fail=$(cat $test_logf 2&gt;/dev/null \
+        	| grep &quot;$fn_test-error: fail&quot; | wc -l | sed &apos;s/^ *//g&apos;)
+    else
+     	echo &quot;Error : The test log not found ..&quot;
+    fi
+    
+    if [ &quot;$test_pass&quot; -eq 0 ] 
+    then
+    	echo &quot;&quot;
+    	echo $log_sep
+		clean_dev
+    	echo $log_sep
+        echo &quot;&quot;
+    fi
+    
+    # default 
+    error_info=&quot;NA&quot;
+    fail_info=&quot;NA&quot;
+    
+	if [ -f $test_logf ] &amp;&amp; [ &quot;$test_pass&quot; -eq 1 ] &amp;&amp; [ &quot;$test_fail&quot; -eq 0 ]
+    then
+        echo &quot;The test is detected as passed[$test_pass]&quot;
+        test_pass_cnt=$((test_pass_cnt+1))
+    elif [ -f $test_logf ] &amp;&amp; [ &quot;$test_pass&quot; -eq 0 ] &amp;&amp; [ &quot;$test_fail&quot; -eq 1 ]
+    then
+    	echo &quot;The test is detected as failed[$test_pass]&quot;
+        failed_fns[test_failed_cnt]=&quot;$fn_test &quot;       
+        if [ &quot;$time_sec&quot; -ge &quot;$max_time&quot; ]
+        then
+            error_message=&quot;$fn_test is stopped forcefully, \
+as it exceeded maximum run time($max_time sec)&quot;
+            error_type=&quot;stopped&quot;
+            fail_message=&quot;$fn_test is stopped forcefully, \
+as it exceeded maximum run time($max_time sec)&quot;
+            fail_type=&quot;stopped&quot;
+            failed_errors[test_failed_cnt]=&quot;$fail_message&quot;
+        else
+        	echo &quot;Collecting Error info ...&quot;
+        	if [ &quot;$is_perl&quot; -eq 1 ]; then
+        		failed_errors[test_failed_cnt]=$(cat $test_logf \
+            		2&gt;/dev/null | perl -ne \
+            		&apos;print &quot;$1\n&quot; if /(?&lt;=$fn_test-error: fail &lt;&lt;&quot;)(.+?)(?=&quot;&gt;&gt;)/&apos; \
+                    | perl -pe &apos;s/&gt;/ /g&apos; | perl -pe &apos;s/&lt;/ /g&apos;)
+                ft_fuc_errors[test_failed_cnt]=$(cat $test_logf \
+            		2&gt;/dev/null | perl -ne \
+            		&apos;print &quot;$1\n&quot; if /(?&lt;=$fn_test-error: fail &lt;&lt;&quot;)(.+?)(?=&quot;&gt;&gt;)/&apos;)
+            elif [ &quot;$is_awk&quot; -eq 1 ]; then
+            	failed_errors[test_failed_cnt]=$(cat $test_logf \
+            		2&gt;/dev/null | awk -v \
+                    FS=&quot;($fn_test-error: fail &lt;&lt;\&quot;|\&quot;&gt;&gt;)&quot; &apos;{print $2}&apos;)
+            elif [ &quot;$is_sed&quot; -eq 1 ]; then
+        		failed_errors[test_failed_cnt]=$(cat $test_logf \
+            		2&gt;/dev/null | sed -n \
+            		&apos;/$fn_test-error: fail &lt;&lt;\&quot;/,/\&quot;&gt;&gt;/&apos; \
+                    | sed &apos;s/&lt;//g&apos; | sed &apos;s/&gt;//g&apos;)
+            else
+            	echo &quot;No support to collecting Error info ...&quot;
+            	failed_errors[test_failed_cnt]=&quot;$error_parse&quot;
+            fi
+            error_type=&quot;exicution-error&quot;
+            error_message=&quot;$fn_test is failed, \
+as it has exicution-error(check the logs : $BUILD_URL)&quot;
+            fail_message=&quot;$fn_test is failed, \
+as it has exicution-error(check the logs : $BUILD_URL)&quot;
+            fail_type=&quot;exicution-error&quot;
+            # Setting Error info
+            e_temp=&quot;0&quot;
+        	e_temp=&quot;${failed_errors[$test_failed_cnt]}&quot;
+        	#there is somthing in first few characters
+        	is_anerror=$(echo ${e_temp:2:6})
+        	if [ -z $is_anerror ] \
+               || [ &quot;${failed_errors[$test_failed_cnt]}&quot; == &quot;$error_parse&quot; ]
+        	then
+            	echo &quot;Error Info - $error_parse ..&quot;		
+        	else
+            	error_info=$(echo -e &quot;${failed_errors[$test_failed_cnt]}&quot;)
+            	fail_info=$(echo -e &quot;${failed_errors[$test_failed_cnt]}&quot;)
+        	fi
+        fi
+        test_failed_cnt=$((test_failed_cnt+1))
+	else
+    	failed_fns[test_failed_cnt]=&quot;$fn_test &quot;
+        if [ -f $test_logf ] &amp;&amp; [ &quot;$time_sec&quot; -ge &quot;$max_time&quot; ]
+        then
+        	echo &quot;The test is stoped, marking as failed[$test_pass]&quot;
+            error_message=&quot;$fn_test is stopped forcefully, \
+as it exceeded maximum run time($max_time sec)&quot;
+            error_type=&quot;stopped&quot;
+            fail_message=&quot;$fn_test is stopped forcefully, \
+as it exceeded maximum run time($max_time sec)&quot;
+            fail_type=&quot;stopped&quot;
+        elif [ -f $test_logf ]
+        then
+         	echo &quot;Something was wrong with $fn_test after started ..&quot;
+            echo &quot;The test is marked as failed[$test_pass]&quot;
+            fail_message=&quot;$fn_test Failed, Unknown&quot;
+     		fail_type=&quot;Unknown&quot;
+     		error_message=&quot;Error in $fn_test, Unknown&quot;
+     		error_type=&quot;Unknown&quot;
+        else
+         	echo &quot;Something was wrong with $fn_test, \
+it dosen&apos;t look like started ..&quot;
+            echo &quot;The test is marked as failed[$test_pass]&quot;
+            error_message=&quot;$fn_test not executed, \
+something was wrong with $fn_test&quot;
+            error_type=&quot;not-executed&quot;
+            fail_message=&quot;$fn_test not executed, \
+something was wrong with $fn_test&quot;
+            fail_type=&quot;not-executed&quot;
+        fi
+        failed_errors[test_failed_cnt]=&quot;$fail_message&quot;
+        test_failed_cnt=$((test_failed_cnt+1))
+	fi
+    
+    # use branch as test sute name to keep track of fail in diffrent barch
+    if [ -z $antidote_name ]
+    then
+    	echo &quot;Unable to get branch name ...&quot;
+    	group_name=$fn_test
+    else
+    	group_name=$antidote_name
+    fi
+    
+    touch $utest_file
+    
+    if [ -f $test_logf ] &amp;&amp; [ &quot;$test_pass&quot; -eq 1 ]
+    then
+
+cat &gt; $utest_file &lt;&lt; EOL
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;
+&lt;testsuite tests=&quot;1&quot; failures=&quot;0&quot; errors=&quot;0&quot; skipped=&quot;0&quot; time=&quot;$time_sec&quot; name=&quot;$group_name&quot;&gt;
+  &lt;testcase time=&quot;$time_sec&quot; name=&quot;$fn_test&quot;/&gt;
+&lt;/testsuite&gt;
+EOL
+
+	else  
+
+cat &gt; $utest_file &lt;&lt; EOL
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot; ?&gt;
+&lt;testsuite tests=&quot;1&quot; failures=&quot;1&quot; errors=&quot;1&quot; skipped=&quot;0&quot; time=&quot;$time_sec&quot; name=&quot;$group_name&quot;&gt;
+  &lt;testcase time=&quot;$time_sec&quot; name=&quot;$fn_test&quot;&gt;
+    &lt;error message=&quot;$error_message&quot; type=&quot;$error_type&quot;&gt; $error_info &lt;/error&gt;
+    &lt;failure message=&quot;$fail_message&quot; type=&quot;$fail_type&quot;&gt; $fail_info &lt;/failure&gt;
+  &lt;/testcase&gt;
+&lt;/testsuite&gt;
+EOL
+		echo &quot;The test is failed save dev/*/log/*.* logs ...&quot;
+		echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+    	echo &quot;$log_sep&quot;
+    	echo &quot;## Test : $fn_test&quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+		for name_dev in $(ls -d -1 $rt_dev_loc/*)
+    	do
+    		if [ -d $name_dev ]
+        	then
+        		echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+            	echo &quot;Files from : $name_dev &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+            	echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+        		for name_dev_log in $(ls -1 $name_dev/log/*.*)
+            	do
+                	echo &quot;File name : $name_dev_log&quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+                	echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+                	cat $name_dev_log &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+                	echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+        		done
+    		fi
+     	done
+	
+	fi 
+
+    if [ -f  $utest_file ]
+    then
+    	echo &quot;Test result file (xml) created ...&quot;
+    	cat $utest_file
+    else
+    	echo &quot;Error in test result file (xml) creation ...&quot;
+    fi
+
+done
+##### test loop end
+
+# Collecting Code Change information
+#
+ft_riak_change_log=&quot;&quot;
+echo &quot;&quot;
+echo $log_sep
+echo &quot;Code change info ...&quot;
+riak_log=&quot;$WORKSPACE/tlog/riak_git_change.log&quot;
+if [ &quot;$riak_HEAD&quot; != &quot;$riak_HEAD_old&quot; ] 
+then
+	if [ &quot;$is_git&quot; -eq 1 ] ; then
+    	echo &quot;Found code diffrance (b:$riak_name) for riak ...&quot;
+    	cd $WORKSPACE/riak_test
+        if [ &quot;$error_na&quot; != &quot;$riak_HEAD_old&quot; ]
+        then
+        	echo &quot;Generating code diff info from last successful test ...&quot;
+        	echo &quot;Change Log :&quot; &gt; $riak_log
+            echo &quot; &quot; &gt;&gt; $riak_log
+            git log &quot;$riak_HEAD_old&quot;..&quot;$riak_HEAD&quot; &gt;&gt; $riak_log
+            riak_blame_email=$(git log &quot;$riak_HEAD_old&quot;..&quot;$riak_HEAD&quot; \
+            | grep -i -o &apos;[A-Z0-9._%+-]\+@[A-Z0-9.-]\+\.[A-Z]\{2,4\}&apos; \
+            | sort -u | perl -pe&apos;chomp, s/$/,/ unless eof&apos;)
+            ft_riak_change_log=&quot;Changes        : https://github.com/SyncFree/riak_test/compare/$riak_HEAD_old...$riak_HEAD&quot;
+        else
+        	echo &quot;No previous successful head info found, generating diff for last $git_max_log changes ...&quot;
+        	echo &quot;Change Log (last $git_max_log) :&quot; &gt; $riak_log
+            echo &quot; &quot; &gt;&gt; $riak_log
+   			git log -n$git_max_log &gt;&gt; $riak_log
+            riak_blame_email=$(git log -n$git_max_log \
+            | grep -i -o &apos;[A-Z0-9._%+-]\+@[A-Z0-9.-]\+\.[A-Z]\{2,4\}&apos; \
+            | sort -u | perl -pe&apos;chomp, s/$/,/ unless eof&apos;)
+        fi
+    else
+    	echo &quot;Unable to get the code diffrance (b:$riak_name) for riak ...&quot;
+    	echo &quot;Change Log          :&quot; &gt; $riak_log
+    	echo &quot;$error_cc&quot; &gt;&gt; $riak_log
+        riak_blame_email=&quot;$error_email&quot;
+    fi
+   	riak_changed=1
+    if [ &quot;$test_pass_cnt&quot; -eq &quot;$test_cnt&quot; ]
+	then
+		echo &quot;Updating the successful head (b:$riak_name) info for riak ...&quot;
+      	cp $WORKSPACE/riak_test/.git/HEAD $code_histroy/riak_test/$riak_name/sHEAD
+	fi
+else
+	echo &quot;No code diffrance (b:$riak_name) for riak from last successful test ...&quot;
+   	riak_changed=0
+    riak_blame_email=&quot;$error_email&quot;
+fi    
+
+#
+ft_antidote_change_log=&quot;&quot;
+temp_lastKnownGitAs=&quot;&quot;
+lastKnownGitAs=&quot;&quot;
+antidote_log=&quot;$WORKSPACE/tlog/antidote_git_change.log&quot;
+if [ &quot;$antidote_HEAD&quot; != &quot;$antidote_HEAD_old&quot; ]
+then
+    if [ &quot;$is_git&quot; -eq 1 ] ; then
+    	echo &quot;Found code difference (b:$antidote_name) for antidote ...&quot;
+    	cd $WORKSPACE/antidote
+        if [ &quot;$error_na&quot; != &quot;$antidote_HEAD_old&quot; ]
+        then
+        	echo &quot;Generating code diff info from last successful test ...&quot;
+        	echo &quot;Change Log :&quot; &gt; $antidote_log
+            echo &quot; &quot; &gt;&gt; $antidote_log
+        	git log &quot;$antidote_HEAD_old&quot;..&quot;$antidote_HEAD&quot; &gt;&gt; $antidote_log
+            antidote_blame_email=$(git log &quot;$antidote_HEAD_old&quot;..&quot;$antidote_HEAD&quot; \
+            | grep -i -o &apos;[A-Z0-9._%+-]\+@[A-Z0-9.-]\+\.[A-Z]\{2,4\}&apos; \
+            | sort -u | perl -pe&apos;chomp, s/$/,/ unless eof&apos;)
+            ft_antidote_change_log=&quot;Changes        : https://github.com/SyncFree/antidote/compare/$antidote_HEAD_old...$antidote_HEAD&quot;
+        else
+        	echo &quot;No previous successful head info found, generating diff for last $git_max_log changes ...&quot;
+        	echo &quot;Change Log (last $git_max_log) :&quot; &gt; $antidote_log
+            echo &quot; &quot; &gt;&gt; $antidote_log
+        	git log -n$git_max_log &gt;&gt; $antidote_log
+            antidote_blame_email=$(git log -n$git_max_log \
+            | grep -i -o &apos;[A-Z0-9._%+-]\+@[A-Z0-9.-]\+\.[A-Z]\{2,4\}&apos; \
+            | sort -u | perl -pe&apos;chomp, s/$/,/ unless eof&apos;)
+        fi
+    else
+    	echo &quot;Unable to get the code diffrance (b:$antidote_name) for antidote ...&quot;
+    	echo &quot;Change Log          :&quot; &gt; $antidote_log
+    	echo &quot;$error_cc&quot; &gt;&gt; $antidote_log
+        antidote_blame_email=&quot;$error_email&quot;
+    fi
+   	antidote_changed=1
+    if [ &quot;$test_pass_cnt&quot; -eq &quot;$test_cnt&quot; ]
+	then
+		echo &quot;Updating the successful head (b:$antidote_name) info for antidote ...&quot;
+		cp $WORKSPACE/antidote/.git/HEAD $code_histroy/antidote/$antidote_name/sHEAD
+    else
+    	if [ -f $code_histroy/antidote/$antidote_name/sHEAD ]
+        then
+    		temp_lastKnownGitAs=$(cat $code_histroy/antidote/$antidote_name/sHEAD)
+            lastKnownGitAs=&quot;Success code: https://github.com/SyncFree/antidote/commit/$temp_lastKnownGitAs ( Last known successful test code commit )&quot;
+        fi
+	fi
+else
+	echo &quot;No code difference (b:$antidote_name) for antidote from last successful test ...&quot;
+	antidote_changed=0
+    antidote_blame_email=&quot;$error_email&quot;
+fi
+
+CSV_DATA=&quot;$BUILD_NUMBER,$test_cnt,$test_pass_cnt,$test_failed_cnt,$SDATE&quot;
+echo $CSV_DATA &gt;&gt; $code_histroy/antidote/$antidote_name/tResults.csv
+echo $CSV_DATA &gt;&gt; $code_histroy/antidote/AgResults.csv
+
+$ft_antidote_merge=&quot;&quot;
+antidote_merge=$(git log --merges -n 1 | head -1 | cut -d&quot; &quot; -f2)
+if [ &quot;$antidote_merge&quot; -eq &quot;$antidote_HEAD&quot; ]
+then
+ 	echo &quot;This commit is a merge ...&quot;
+    $ft_antidote_merge=&quot;This commit was a Merge&quot;
+fi
+
+# Test code
+tmp_ft_cc_email=&quot;&quot;
+tmp_ft_cc_email=$(echo $ft_cc_email | sed &quot;s/,/\n/g&quot;)
+for temp_email in $(echo $antidote_blame_email | sed &quot;s/,/ /g&quot;)
+do
+    tmp_ft_cc_email=$(echo $tmp_ft_cc_email | sed &quot;s/ /\n/g&quot; | grep -v $temp_email)
+done
+echo &quot;tmp_ft_cc_email=$tmp_ft_cc_email&quot;
+
+# Push to  env
+
+#
+echo &quot;$ft_antidote_merge=$ft_antidote_merge&quot; &gt;&gt; $exportPopertyFile
+echo &quot;ft_riak_change_log=$ft_riak_change_log&quot; &gt;&gt; $exportPopertyFile
+echo &quot;ft_antidote_change_log=$ft_antidote_change_log&quot; &gt;&gt; $exportPopertyFile
+
+echo &quot;Changes riak git url : $ft_riak_change_log&quot;
+echo &quot;Changes antidote git url : $ft_antidote_change_log&quot;
+
+#
+echo &quot;lastKnownGitAs=$lastKnownGitAs&quot; &gt;&gt; $exportPopertyFile
+
+#
+if [ &quot;$error_email&quot; != &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; != &quot;$riak_blame_email&quot; ]
+then
+	ft_blame_email=&quot;$antidote_blame_email,$riak_blame_email&quot;
+    
+elif [ &quot;$error_email&quot; == &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; != &quot;$riak_blame_email&quot; ]
+then
+	ft_blame_email=&quot;$riak_blame_email&quot;
+    
+elif [ &quot;$error_email&quot; != &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; == &quot;$riak_blame_email&quot; ]
+then
+	ft_blame_email=&quot;$antidote_blame_email&quot;
+    
+elif [ &quot;$error_email&quot; == &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; == &quot;$riak_blame_email&quot; ]
+then
+	ft_blame_email=&quot;$error_email&quot;
+    
+else
+	echo &quot;Unable to find upstream commiters email &quot;
+    echo &quot;or there is no change from last sucessful test ...&quot;
+    ft_blame_email=&quot;$error_email&quot;
+fi
+
+echo &quot;upstream commiters email : $ft_blame_email&quot;
+echo &quot;ft_blame_email=$ft_blame_email&quot; &gt;&gt; $exportPopertyFile
+
+# 
+ft_thisBuild=&quot;&quot;
+ft_RedAlert=&quot;&quot;
+ft_thisBuildCount=0
+ft_thisBuildfCount=0
+ft_thisBuildsCount=0
+#
+if [ &quot;$test_pass_cnt&quot; -ne &quot;$test_cnt&quot; ]
+then
+	
+	if [ -f $code_histroy/antidote/$antidote_name/sBuild ]
+    then
+        echo &quot;0&quot; &gt; $code_histroy/antidote/$antidote_name/sCount
+        ft_thisBuildfCount=&quot;1&quot;
+        echo &quot;$ft_thisBuildfCount&quot; &gt; $code_histroy/antidote/$antidote_name/fCount    
+    	ft_thisBuild=&quot;The overall test status is changed from PASSED to FAILED&quot;
+        ft_RedAlert=&quot;WARNING : Latest code changes made tests to fail.&quot;
+    	cp $code_histroy/antidote/$antidote_name/sBuild $code_histroy/antidote/$antidote_name/lsBuild
+
+    elif [ -f $code_histroy/antidote/$antidote_name/fBuild ]
+    then
+    	if [ -f code_histroy/antidote/$antidote_name/fCount ] 
+        then
+        	ft_thisBuildfCount=$(cat $code_histroy/antidote/$antidote_name/fCount)
+            if [[ $ft_thisBuildfCount =~ $numre ]]
+            then
+        		ft_thisBuildfCount=$((ft_thisBuildfCount+1))
+            else
+            	ft_thisBuildfCount=&quot;1&quot;
+            fi
+        else
+        	ft_thisBuildfCount=&quot;1&quot;
+        fi
+        echo &quot;$ft_thisBuildfCount&quot; &gt; $code_histroy/antidote/$antidote_name/fCount    
+    	ft_thisBuild=&quot;The overall test status is still FAILED (last $ft_thisBuildfCount)&quot;
+        ft_RedAlert=&quot;&quot;    	
+        cp $code_histroy/antidote/$antidote_name/fBuild $code_histroy/antidote/$antidote_name/lfBuild
+        
+    else
+    	ft_thisBuild=&quot;The overall test status is FAILED (from unknown / first time)&quot;
+        ft_RedAlert=&quot;&quot;     
+        ft_thisBuildfCount=&quot;1&quot;
+        echo &quot;$ft_thisBuildfCount&quot; &gt; $code_histroy/antidote/$antidote_name/fCount
+        
+    fi
+    echo $BUILD_NUMBER &gt; $code_histroy/antidote/$antidote_name/fBuild
+    if [ -f $code_histroy/antidote/$antidote_name/lsBuild ]
+    then
+    	lastKnownBuild=$(cat $code_histroy/antidote/$antidote_name/lsBuild)
+    else
+    	lastKnownBuild=&quot;unknown&quot;
+    fi
+    ft_thisBuildCount=&quot;$ft_thisBuildfCount&quot;
+    
+else
+
+	if [ -f $code_histroy/antidote/$antidote_name/fBuild ]
+    then
+        echo &quot;0&quot; &gt; $code_histroy/antidote/$antidote_name/fCount
+        ft_thisBuildsCount=&quot;1&quot;
+        echo &quot;$ft_thisBuildsCount&quot; &gt; $code_histroy/antidote/$antidote_name/sCount     
+    	ft_thisBuild=&quot;The overall test status is changed from FAILED to PASSED&quot;
+        ft_RedAlert=&quot;Latest code changes made tests to pass.&quot;      
+    	cp $code_histroy/antidote/$antidote_name/fBuild $code_histroy/antidote/$antidote_name/lfBuild
+        
+    elif [ -f $code_histroy/antidote/$antidote_name/sBuild ]
+    then
+    	if [ -f $code_histroy/antidote/$antidote_name/sCount ] 
+        then
+        	ft_thisBuildsCount=$(cat $code_histroy/antidote/$antidote_name/sCount)
+            if [[ $ft_thisBuildsCount =~ $numre ]]
+            then
+        		ft_thisBuildsCount=$((ft_thisBuildsCount+1))
+            else
+            	ft_thisBuildsCount=&quot;1&quot;
+            fi
+        else
+        	ft_thisBuildsCount=&quot;1&quot;
+        fi
+        echo &quot;$ft_thisBuildsCount&quot; &gt; $code_histroy/antidote/$antidote_name/sCount      
+    	ft_thisBuild=&quot;The overall test status is still PASSED (last $ft_thisBuildsCount)&quot;
+        ft_RedAlert=&quot;&quot;     
+        cp $code_histroy/antidote/$antidote_name/sBuild $code_histroy/antidote/$antidote_name/lsBuild
+     
+    else
+    	ft_thisBuild=&quot;The overall test status is PASSED (from unknown / first time)&quot;
+        ft_RedAlert=&quot;&quot;     
+        ft_thisBuildsCount=&quot;1&quot;
+        echo &quot;$ft_thisBuildsCount&quot; &gt; $code_histroy/antidote/$antidote_name/sCount
+        
+    fi
+    echo $BUILD_NUMBER &gt; $code_histroy/antidote/$antidote_name/sBuild
+    if [ -f $code_histroy/antidote/$antidote_name/lfBuild ]
+    then
+    	lastKnownBuild=$(cat $code_histroy/antidote/$antidote_name/lfBuild)
+    else
+    	lastKnownBuild=&quot;unknown&quot;
+    fi
+   	ft_thisBuildCount=&quot;$ft_thisBuildsCount&quot;
+fi
+
+echo &quot;ft_thisBuild=$ft_thisBuild&quot; &gt;&gt; $exportPopertyFile
+echo &quot;ft_RedAlert=$ft_RedAlert&quot; &gt;&gt; $exportPopertyFile
+echo &quot;lastKnownBuild=$lastKnownBuild&quot; &gt;&gt; $exportPopertyFile
+echo &quot;ft_thisBuildCount=$ft_thisBuildCount&quot; &gt;&gt; $exportPopertyFile
+
+echo &quot;Test status : $ft_thisBuild&quot;
+echo &quot;Red Alert : $ft_RedAlert&quot;
+echo &quot;Last known build : $lastKnownBuild&quot;
+echo &quot;This state build : $ft_thisBuildCount&quot;
+
+#
+test_failed_name=$(IFS=, ; echo &quot;${failed_fns[*]}&quot;)
+echo &quot;test_failed_name=$test_failed_name&quot; &gt;&gt; $exportPopertyFile
+
+# Summary
+echo &quot;&quot;
+echo &quot;&quot;
+echo &quot;################ Summary ####################&quot;
+echo &quot;&quot;
+echo &quot;&quot;
+echo $log_sep
+echo &quot;# riak_test&quot; 
+echo &quot;branch              : $riak_name&quot;	
+if [ &quot;$riak_changed&quot; -eq 1 ]
+then
+    if [ &quot;$riak_changed&quot; -gt 0 ]
+    then
+    	cat $riak_log
+    	echo &quot;&quot;
+        cp $riak_log $WORKSPACE/ft_send/riak_git_change_log.txt
+    else
+    	echo &quot;&quot;
+    fi
+    echo &quot;riak_branch_changed=Change found&quot; &gt;&gt; $exportPopertyFile
+else
+	echo &quot;Change Log          : No change found&quot;
+    echo &quot;&quot;
+    echo &quot;riak_branch_changed=No change found&quot; &gt;&gt; $exportPopertyFile
+fi
+
+echo $log_sep
+echo &quot;# antidote&quot;
+echo &quot;branch              : $antidote_name&quot;
+if [ &quot;$antidote_changed&quot; -eq 1 ]
+then
+    if [ &quot;$antidote_changed&quot; -gt 0 ]
+    then
+    	cat $antidote_log
+    	echo &quot;&quot;
+        cp $antidote_log $WORKSPACE/ft_send/antidote_git_change_log.txt
+    else
+    	echo &quot;&quot;
+    fi
+    echo &quot;antidote_branch_changed=Change found&quot; &gt;&gt; $exportPopertyFile
+else
+	echo &quot;Change Log          : No change found&quot;
+    echo &quot;&quot;
+    echo &quot;antidote_branch_changed=No change found&quot; &gt;&gt; $exportPopertyFile
+fi
+
+
+ft_error_log=&quot;$WORKSPACE/tlog/ft_error.log&quot;
+echo $log_sep
+if [ &quot;$mak_dev_nos&quot; -lt &quot;$default_dev_nos&quot; ]
+then
+    echo &quot;WARNING : The test is run with less dev nos ($mak_dev_nos &lt; $default_dev_nos)&quot;
+    echo &quot;          Update in Makefile&quot;
+fi
+echo &quot;Total no of tests   :$test_cnt&quot; 
+echo &quot;test_cnt=$test_cnt&quot; &gt;&gt; $exportPopertyFile
+echo &quot;No of tests passed  :$test_pass_cnt&quot;
+echo &quot;test_cnt=$test_cnt&quot; &gt;&gt; $exportPopertyFile
+echo &quot;test_pass_cnt=$test_pass_cnt&quot; &gt;&gt; $exportPopertyFile
+
+if [ &quot;$test_pass_cnt&quot; -ne &quot;$test_cnt&quot; ]
+then
+	echo &quot;No of tests failed  :$test_failed_cnt&quot;
+    echo &quot;test_failed_cnt=$test_failed_cnt&quot; &gt;&gt; $exportPopertyFile
+    cp $WORKSPACE/tlog/ft_test_dev_logs.log $WORKSPACE/ft_send/dev_logs.txt
+    loop_cnt=0
+    echo &quot;&quot;
+    echo $log_sep
+    echo &quot;Failed tests summary -&quot;
+    echo &quot;&quot; &gt; $ft_error_log
+    for failed_fn_name in &quot;${failed_fns[@]}&quot;
+    do
+    	error_temp=&quot;0&quot;
+    	echo &quot;# $failed_fn_name&quot; 
+        echo &quot;# $failed_fn_name&quot; &gt;&gt; $ft_error_log
+        error_temp=&quot;${failed_errors[$loop_cnt]}&quot;
+        #there is somthing in first few characters
+        is_error=$(echo ${error_temp:2:6})
+        if [ -z $is_error ]
+        then
+        	echo &quot;Unable to parse error info, refer the build log ($BUILD_URL)&quot;
+            echo &quot;Unable to parse error info, refer the build log ($BUILD_URL)&quot; &gt;&gt; $ft_error_log
+        else
+			#echo -e &quot;Error : ${failed_errors[$loop_cnt]}&quot;
+            echo -e &quot;Error : ${ft_fuc_errors[$loop_cnt]}&quot;
+            #echo -e &quot;Error : ${failed_errors[$loop_cnt]}&quot; &gt;&gt; $ft_error_log
+            echo -e &quot;Error : ${ft_fuc_errors[$loop_cnt]}&quot; &gt;&gt; $ft_error_log
+        fi
+        echo &quot;&quot; 
+        echo &quot;&quot; &gt;&gt; $ft_error_log
+        loop_cnt=$((loop_cnt+1))
+    done
+    echo &quot;Marking as FAILED&quot;
+    echo $log_sep
+    echo &quot;&quot;
+	cp $ft_error_log $WORKSPACE/ft_send/test_error_logs.txt
+    echo &quot;ft_BUILD_RESULT=FAILED&quot; &gt; $exportBuildFile
+    echo &quot;ft_BUILD_NUMBER=$BUILD_NUMBER&quot; &gt;&gt; $exportBuildFile
+    echo &quot;build_exit_code=All tests are not passed&quot; &gt;&gt; $exportPopertyFile
+else
+	echo &quot;test_failed_cnt=0&quot; &gt;&gt; $exportPopertyFile
+	echo &quot;Marking as PASSED&quot;
+    echo $log_sep
+    echo &quot;&quot;
+    echo &quot;ft_BUILD_RESULT=PASSED&quot; &gt; $exportBuildFile
+    echo &quot;ft_BUILD_NUMBER=$BUILD_NUMBER&quot; &gt;&gt; $exportBuildFile
+    echo &quot;build_exit_code=All tests are passed&quot; &gt;&gt; $exportPopertyFile
+fi
+</command>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@1.92.1">
+      <info>
+        <propertiesFilePath>$WORKSPACE/envpro/general.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <EnvInjectBuilder plugin="envinject@1.92.1">
+      <info>
+        <propertiesFilePath>$WORKSPACE/envpro/ft_build.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+ft_passed=&quot;PASSED&quot;
+exportPopertyFile=&quot;$WORKSPACE/envpro/general.properties&quot;
+exportBuildFile=&quot;$WORKSPACE/envpro/ft_build.properties&quot;
+
+
+if [ &quot;$ft_BUILD_NUMBER&quot; -ne &quot;$BUILD_NUMBER&quot; ]
+then
+	echo &quot;Unable to read build status from env ...&quot;
+    if [ -f $exportBuildFile ]
+    then
+    	echo &quot;exporting it from property file ...&quot;
+		. $exportBuildFile
+    else
+    	echo &quot;Unable to read propery file ...&quot;
+        exit 1
+    fi
+fi
+
+if [ &quot;$ft_BUILD_RESULT&quot; != &quot;$ft_passed&quot; ]
+then
+	echo $build_exit_code
+	exit 1
+else
+	echo $build_exit_code
+fi
+
+</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.9">
+      <testResults>utest/Test-*.xml</testResults>
+      <keepLongStdio>false</keepLongStdio>
+      <testDataPublishers>
+        <de.esailors.jenkins.teststability.StabilityTestDataPublisher plugin="test-stability@1.0"/>
+      </testDataPublishers>
+      <healthScaleFactor>1.0</healthScaleFactor>
+    </hudson.tasks.junit.JUnitResultArchiver>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.40.5">
+      <recipientList></recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+          <email>
+            <recipientList>$ft_blame_email, cc:vipintm@gmail.com, cc:alejandro.tomsic@lip6.fr, cc:bieniusa@cs.uni-kl.de, cc:mars.leezm@gmail.com, cc:tyler.crain@lip6.fr, cc:akkoorath@cs.uni-kl.de</recipientList>
+            <subject>$BUILD_DISPLAY_NAME : riak test for antidote $antidote_branch branch is $ft_BUILD_RESULT</subject>
+            <body>### Summary
+Result : $build_exit_code
+$ft_thisBuild
+$ft_RedAlert $ft_antidote_merge
+
+### antidote riak test
+Total tests      : $test_cnt
+Test passed   : $test_pass_cnt
+
+### antidote
+# For this test
+Branch           : $antidote_branch
+Commit          : https://github.com/SyncFree/antidote/commit/$antidote_GIT_COMMIT
+Code change : $antidote_branch_changed ( from last successful test )
+Build              : $antidote_BUILD_URL ($antidote_BUILD_NUMBER)
+# History
+Test status     : $antidote_branch_history
+$ft_antidote_change_log
+
+### riak_test
+# For this test
+Branch           : $riak_branch
+Commit          : https://github.com/SyncFree/riak_test/commit/$riak_GIT_COMMIT
+Code change : $riak_branch_changed ( from last successful test )
+Build              : $riak_BUILD_URL ( $riak_BUILD_NUMBER )
+# History
+Test status     : $riak_branch_history
+$ft_riak_change_log
+
+### Test Notes
+$dev_message
+
+### Attachments
+Full jenkins run log : build.log
+git log ( max last $git_max_log | from last successful tested point) :  antidote_git_change_log.txt, riak_git_change_log.txt 
+</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.UpstreamComitterRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern>ft_send/*.txt</attachmentsPattern>
+            <attachBuildLog>true</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$ft_blame_email, vipintm@gmail.com, alejandro.tomsic@lip6.fr, bieniusa@cs.uni-kl.de, mars.leezm@gmail.com, tyler.crain@lip6.fr, akkoorath@cs.uni-kl.de</replyTo>
+            <contentType>text/plain</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+        <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+          <email>
+            <recipientList>$ft_blame_email, cc:vipintm@gmail.com, cc:alejandro.tomsic@lip6.fr, cc:bieniusa@cs.uni-kl.de, cc:mars.leezm@gmail.com, cc:tyler.crain@lip6.fr, cc:akkoorath@cs.uni-kl.de</recipientList>
+            <subject>$BUILD_DISPLAY_NAME : riak test for antidote $antidote_branch branch is $ft_BUILD_RESULT</subject>
+            <body>### Summary
+Result : $build_exit_code
+$ft_thisBuild
+$ft_RedAlert $ft_antidote_merge
+
+### antidote riak test
+Total tests      : $test_cnt
+Test passed   : $test_pass_cnt
+Test failed      : $test_failed_cnt
+Failed tests    : $test_failed_name
+
+### antidote
+# For this test
+Branch           : $antidote_branch
+Code change : $antidote_branch_changed ( from last successful test )
+Commit          : https://github.com/SyncFree/antidote/commit/$antidote_GIT_COMMIT
+Build               : $antidote_BUILD_URL ( $antidote_BUILD_NUMBER )
+# History
+Test status     : $antidote_branch_history ($lastKnownBuild)
+$lastKnownGitAs
+$ft_antidote_change_log
+
+### riak_test
+# For this test
+Branch           : $riak_branch
+Commit          : https://github.com/SyncFree/riak_test/commit/$riak_GIT_COMMIT
+Code change : $riak_branch_changed ( from last successful test )
+Build              : $riak_BUILD_URL ( $riak_BUILD_NUMBER )
+# History
+Test status     : $riak_branch_history
+$ft_riak_change_log
+
+### Test Notes
+$dev_message
+
+### Attachments
+Full jenkins run log : build.log 
+Test errors : test_error_logs.txt 
+Concatenated ~/rt/antidote/current/dev/*/log/*.*  : dev_logs.txt
+git log ( max last $git_max_log | from last successful tested point)  : antidote_git_change_log.txt, riak_git_change_log.txt
+</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.UpstreamComitterRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern>ft_send/*.txt</attachmentsPattern>
+            <attachBuildLog>true</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$ft_blame_email, vipintm@gmail.com, alejandro.tomsic@lip6.fr, bieniusa@cs.uni-kl.de, mars.leezm@gmail.com, tyler.crain@lip6.fr, akkoorath@cs.uni-kl.de</replyTo>
+            <contentType>text/plain</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+        <hudson.plugins.emailext.plugins.trigger.AbortedTrigger>
+          <email>
+            <recipientList>vipintm@gmail.com, alejandro.tomsic@lip6.fr, cc:bieniusa@cs.uni-kl.de, cc:mars.leezm@gmail.com, cc:tyler.crain@lip6.fr, cc:deepthidevaki@gmail.com</recipientList>
+            <subject>$BUILD_DISPLAY_NAME :  riak test for antidote is ABORTED</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.UpstreamComitterRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>true</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>vipintm@gmail.com, alejandro.tomsic@lip6.fr, bieniusa@cs.uni-kl.de, mars.leezm@gmail.com, tyler.crain@lip6.fr, deepthidevaki@gmail.com</replyTo>
+            <contentType>text/plain</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.AbortedTrigger>
+      </configuredTriggers>
+      <contentType>text/plain</contentType>
+      <defaultSubject></defaultSubject>
+      <defaultContent></defaultContent>
+      <attachmentsPattern></attachmentsPattern>
+      <presendScript></presendScript>
+      <attachBuildLog>true</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo></replyTo>
+      <saveOutput>true</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+  </publishers>
+  <buildWrappers/>
+</project>

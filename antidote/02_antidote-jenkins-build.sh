@@ -803,10 +803,10 @@ then
         then
     		lastKnownGitAs=$(cat $code_histroy/antidote/$antidote_name/sHEAD)
         fi
-	fi
+    fi
 else
-	echo "No code diffrance (b:$antidote_name) for antidote from last successful test ..."
-	antidote_changed=0
+    echo "No code diffrance (b:$antidote_name) for antidote from last successful test ..."
+    antidote_changed=0
     antidote_blame_email="$error_email"
 fi
 
@@ -844,7 +844,7 @@ then
 	ft_blame_email="$error_email"
     
 else
-	echo "Unable to find upstream commiters email "
+    echo "Unable to find upstream commiters email "
     echo "or there is no change from last sucessful test ..."
     ft_blame_email="$error_email"
 fi
