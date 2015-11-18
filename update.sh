@@ -84,7 +84,7 @@ function get_all_jobs()
 		for temp_jobs in $(echo $JENKINS_JOBS | sed "s/,/ /g")
 		do
 			echo "Getting XML configuration for $temp_jobs ..."
-    			jenkins-cli_run get-job $temp_jobs >  $WORKSPACE/$temp_jobs/job.xml 
+    			jenkins-cli_run "get-job $temp_jobs > $WORKSPACE/$temp_jobs/job.xml"
 		done
 	else
 		exit 1
