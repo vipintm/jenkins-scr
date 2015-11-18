@@ -1,4 +1,4 @@
-git                       |GIT plugin                           |2.4.0
+git                       GIT plugin                           2.4.0
 cvs                       CVS Plug-in                          2.12
 external-monitor-job      External Monitor Job Type Plugin     1.4
 credentials               Credentials Plugin                   1.24
