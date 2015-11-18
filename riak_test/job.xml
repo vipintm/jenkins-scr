@@ -1,0 +1,124 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <logRotator class="hudson.tasks.LogRotator">
+    <daysToKeep>-1</daysToKeep>
+    <numToKeep>20</numToKeep>
+    <artifactDaysToKeep>-1</artifactDaysToKeep>
+    <artifactNumToKeep>2</artifactNumToKeep>
+  </logRotator>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.security.AuthorizationMatrixProperty>
+      <permission>hudson.model.Item.Read:anonymous</permission>
+      <permission>hudson.model.Item.Discover:anonymous</permission>
+      <permission>hudson.model.Item.Workspace:anonymous</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <org.jvnet.jenkins.plugins.nodelabelparameter.NodeParameterDefinition plugin="nodelabelparameter@1.5.1">
+          <name></name>
+          <description></description>
+          <allowedSlaves>
+            <string>shango</string>
+          </allowedSlaves>
+          <defaultSlaves>
+            <string>shango</string>
+          </defaultSlaves>
+          <triggerIfResult>multiSelectionDisallowed</triggerIfResult>
+          <allowMultiNodeSelection>false</allowMultiNodeSelection>
+          <triggerConcurrentBuilds>false</triggerConcurrentBuilds>
+          <ignoreOfflineNodes>false</ignoreOfflineNodes>
+          <nodeEligibility class="org.jvnet.jenkins.plugins.nodelabelparameter.node.AllNodeEligibility"/>
+        </org.jvnet.jenkins.plugins.nodelabelparameter.NodeParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.copyartifact.CopyArtifactPermissionProperty plugin="copyartifact@1.36.1">
+      <projectNameList>
+        <string>ft_antidote</string>
+      </projectNameList>
+    </hudson.plugins.copyartifact.CopyArtifactPermissionProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@2.4.0">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>https://github.com/SyncFree/riak_test</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>features/csm/floppystore</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions>
+      <hudson.plugins.git.extensions.impl.CleanBeforeCheckout/>
+      <hudson.plugins.git.extensions.impl.AuthorInChangelog/>
+      <hudson.plugins.git.extensions.impl.MessageExclusion>
+        <excludedMessage>(?s).*PartialCommit.*</excludedMessage>
+      </hudson.plugins.git.extensions.impl.MessageExclusion>
+    </extensions>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>true</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <authToken>floppybuild</authToken>
+  <triggers>
+    <hudson.triggers.SCMTrigger>
+      <spec>H/15 * * * *</spec>
+      <ignorePostCommitHooks>false</ignorePostCommitHooks>
+    </hudson.triggers.SCMTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>export PATH=/usr/local/Cellar/erlang/R16B02/bin:$PATH
+make clean
+make distclean
+if [ -d deps ]; then
+	rm -rf deps
+fi
+make</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+echo &quot;Saving properties ...&quot;
+echo &quot;riak_GIT_AUTHOR_NAME=$GIT_AUTHOR_NAME&quot; &gt; $WORKSPACE/riak_env.properties
+echo &quot;riak_GIT_COMMITTER_NAME=$GIT_COMMITTER_NAME&quot; &gt;&gt; $WORKSPACE/riak_env.properties
+echo &quot;riak_GIT_AUTHOR_EMAIL=$GIT_AUTHOR_EMAIL&quot; &gt;&gt; $WORKSPACE/riak_env.properties
+echo &quot;riak_GIT_COMMITTER_EMAIL=$GIT_COMMITTER_EMAIL&quot; &gt;&gt; $WORKSPACE/riak_env.properties
+echo &quot;riak_GIT_COMMIT=$GIT_COMMIT&quot; &gt;&gt; $WORKSPACE/riak_env.properties
+echo &quot;riak_GIT_BRANCH=$GIT_BRANCH&quot; &gt;&gt; $WORKSPACE/riak_env.properties
+echo &quot;riak_BUILD_NUMBER=$BUILD_NUMBER&quot; &gt;&gt; $WORKSPACE/riak_env.properties
+echo &quot;riak_BUILD_URL=$BUILD_URL&quot; &gt;&gt; $WORKSPACE/riak_env.properties</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>**</artifacts>
+      <allowEmptyArchive>false</allowEmptyArchive>
+      <onlyIfSuccessful>true</onlyIfSuccessful>
+      <fingerprint>true</fingerprint>
+      <defaultExcludes>false</defaultExcludes>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.tasks.BuildTrigger>
+      <childProjects>ft_antidote</childProjects>
+      <threshold>
+        <name>SUCCESS</name>
+        <ordinal>0</ordinal>
+        <color>BLUE</color>
+        <completeBuild>true</completeBuild>
+      </threshold>
+    </hudson.tasks.BuildTrigger>
+    <hudson.tasks.Mailer plugin="mailer@1.15">
+      <recipients>vipintm@gmail.com alejandro.tomsic@lip6.fr</recipients>
+      <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
+      <sendToIndividuals>true</sendToIndividuals>
+    </hudson.tasks.Mailer>
+  </publishers>
+  <buildWrappers/>
+</project>
