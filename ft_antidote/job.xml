@@ -1013,6 +1013,7 @@ for temp_email in $(echo $ft_blame_email | sed &quot;s/,/ /g&quot;)
 do
     tmp_ft_cc_email=$(echo $tmp_ft_cc_email | sed &quot;s/ /\n/g&quot; | grep -v $temp_email)
 done
+
 ft_cc_email=$(echo $tmp_ft_cc_email | sed -e &quot;s/ /\n/g&quot; | sed -e &apos;s/^/cc:/&apos; | perl -pe&apos;chomp, s/$/,/ unless eof&apos;)
 echo &quot;ft_cc_emaill=$ft_cc_email&quot;
 
