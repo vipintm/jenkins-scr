@@ -58,10 +58,7 @@ function jenkins-cli_run()
 {
 	if [ "$is_java" -eq 1 ] && [ "$is_jenkins_cli" -eq 1 ]
 	then
-		echo "Running jenkins command $@ in $JENKINS_URL ..."
 		java -jar $WORKSPACE/ft_bin/jenkins-cli.jar -s $JENKINS_URL/ $@
-	else
-		exit 1
     	fi
 }
 
@@ -84,7 +81,7 @@ function get_all_jobs()
 		for temp_jobs in $(echo $JENKINS_JOBS | sed "s/,/ /g")
 		do
 			echo "Getting XML configuration for $temp_jobs ..."
-    			jenkins-cli_run "get-job $temp_jobs > $WORKSPACE/$temp_jobs/job.xml"
+    			jenkins-cli_run get-job $temp_jobs > $WORKSPACE/$temp_jobs/job.xml
 		done
 	else
 		exit 1
