@@ -13,12 +13,12 @@ is_auth=0
 
 if type "java" > /dev/null 2>&1 ; then
 	is_java=1
-    	java -version
+#    	java -version
 fi
 
 if type "git" > /dev/null 2>&1 ; then
 	is_git=1
-    	git --version
+#    	git --version
 fi
 
 function clean_old_logs()
@@ -58,6 +58,7 @@ function jenkins-cli_run()
 {
 	if [ "$is_java" -eq 1 ] && [ "$is_jenkins_cli" -eq 1 ]
 	then
+		echo "Running jenkins command $@ in $JENKINS_URL ..."
 		java -jar $WORKSPACE/ft_bin/jenkins-cli.jar -s $JENKINS_URL/ $@
 	else
 		exit 1
@@ -82,6 +83,7 @@ function get_all_jobs()
         then
 		for temp_jobs in $(echo $JENKINS_JOBS | sed "s/,/ /g")
 		do
+			echo "Getting XML configuration for $temp_jobs ..."
     			jenkins-cli_run get-job $temp_jobs >  $WORKSPACE/$temp_jobs/job.xml 
 		done
 	else
@@ -93,6 +95,7 @@ function get_plugins()
 {
         if [ "$is_auth" -eq 1 ]
         then
+		echo "Getting list of plugins ..."
                 jenkins-cli_run list-plugins >  $WORKSPACE/list-plugins.md
         else
                 exit 1
@@ -105,6 +108,7 @@ function git_commit()
 	then
 		for temp_file in $(git diff --name-only)
 		do
+			echo "Commiting $temp_file in git ..."
 			git commit -m"$COMMIT_MSG" $temp_file
 		done
 	else
@@ -116,6 +120,7 @@ function git_push()
 {
         if [ "$is_git" -eq 1 ]
         then
+		echo "Pusing chnages to git ..."
                 git push
         else
                 exit 1
