@@ -1,3 +1,4 @@
+Running jenkins command get-job riak_test in http://jenkins.lip6.fr ...
 <?xml version='1.0' encoding='UTF-8'?>
 <project>
   <actions/>
