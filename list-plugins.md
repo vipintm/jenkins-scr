@@ -1,4 +1,3 @@
-Running jenkins command list-plugins in http://jenkins.lip6.fr ...
 git                       GIT plugin                           2.4.0
 cvs                       CVS Plug-in                          2.12
 external-monitor-job      External Monitor Job Type Plugin     1.4
