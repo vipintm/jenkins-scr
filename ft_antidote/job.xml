@@ -959,22 +959,13 @@ CSV_DATA=&quot;$BUILD_NUMBER,$test_cnt,$test_pass_cnt,$test_failed_cnt,$SDATE&qu
 echo $CSV_DATA &gt;&gt; $code_histroy/antidote/$antidote_name/tResults.csv
 echo $CSV_DATA &gt;&gt; $code_histroy/antidote/AgResults.csv
 
-$ft_antidote_merge=&quot;&quot;
+ft_antidote_merge=&quot;&quot;
 antidote_merge=$(git log --merges -n 1 | head -1 | cut -d&quot; &quot; -f2)
 if [ &quot;$antidote_merge&quot; -eq &quot;$antidote_HEAD&quot; ]
 then
  	echo &quot;This commit is a merge ...&quot;
-    $ft_antidote_merge=&quot;This commit was a Merge&quot;
+    ft_antidote_merge=&quot;This commit was a Merge.&quot;
 fi
-
-# Test code
-tmp_ft_cc_email=&quot;&quot;
-tmp_ft_cc_email=$(echo $ft_cc_email | sed &quot;s/,/\n/g&quot;)
-for temp_email in $(echo $antidote_blame_email | sed &quot;s/,/ /g&quot;)
-do
-    tmp_ft_cc_email=$(echo $tmp_ft_cc_email | sed &quot;s/ /\n/g&quot; | grep -v $temp_email)
-done
-echo &quot;tmp_ft_cc_email=$tmp_ft_cc_email&quot;
 
 # Push to  env
 
@@ -1014,6 +1005,16 @@ fi
 
 echo &quot;upstream commiters email : $ft_blame_email&quot;
 echo &quot;ft_blame_email=$ft_blame_email&quot; &gt;&gt; $exportPopertyFile
+
+# Test code
+tmp_ft_cc_email=&quot;&quot;
+tmp_ft_cc_email=$(echo $ft_cc_email | sed &quot;s/,/\n/g&quot;)
+for temp_email in $(echo $ft_blame_email | sed &quot;s/,/ /g&quot;)
+do
+    tmp_ft_cc_email=$(echo $tmp_ft_cc_email | sed &quot;s/ /\n/g&quot; | grep -v $temp_email)
+done
+ft_cc_email=$(echo $tmp_ft_cc_email | sed -e &quot;s/ /\n/g&quot; | sed -e &apos;s/^/cc:/&apos; | perl -pe&apos;chomp, s/$/,/ unless eof&apos;)
+echo &quot;ft_cc_emaill=$ft_cc_email&quot;
 
 # 
 ft_thisBuild=&quot;&quot;
