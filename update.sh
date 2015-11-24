@@ -93,7 +93,7 @@ function get_plugins()
         if [ "$is_auth" -eq 1 ]
         then
 		echo "Getting list of plugins ..."
-                jenkins-cli_run list-plugins >  $WORKSPACE/list-plugins.md
+                jenkins-cli_run list-plugins >  $WORKSPACE/list-plugins.txt
         else
                 exit 1
         fi
