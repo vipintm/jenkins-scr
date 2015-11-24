@@ -37,7 +37,7 @@
   </properties>
   <scm class="hudson.scm.NullSCM"/>
   <canRoam>true</canRoam>
-  <disabled>false</disabled>
+  <disabled>true</disabled>
   <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
   <blockBuildWhenUpstreamBuilding>true</blockBuildWhenUpstreamBuilding>
   <authToken>flopybuild</authToken>
@@ -104,7 +104,7 @@ fi
       </info>
     </EnvInjectBuilder>
     <hudson.tasks.Shell>
-      <command>#!/bin/bash
+      <command>#!/bin/bash -x
 
 # paths
 export PATH=/usr/local/Cellar/erlang/R16B02/bin:$PATH
@@ -148,6 +148,8 @@ is_erlc=0
 is_git=0
 is_grep=0
 is_java=0
+is_wget=0
+is_curl=0
 riak_changed=0
 antidote_changed=0
 test_pass_cnt=0
@@ -160,7 +162,7 @@ declare -a ft_fuc_errors
 # git max log
 git_max_log=&quot;15&quot;
 # Time out
-max_time=3600 #in seconds
+max_time=10 #3600 #in seconds
 # dev nos
 default_dev_nos=6 #default
 dev_nos=6 
@@ -203,11 +205,19 @@ if type &quot;java&quot; &gt; /dev/null 2&gt;&amp;1 ; then
 	is_java=1
     java -version
 fi
+if type &quot;wget&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+	is_wget=1
+    wget --version
+fi
+if type &quot;curl&quot; &gt; /dev/null 2&gt;&amp;1 ; then
+	is_curl=1
+    curl --version
+fi
 
 # min req.
 if [ -z $WORKSPACE ] || [ -z $HOME ] || [ &quot;$is_sed&quot; -eq 0 ] \
 	|| [ &quot;$is_erl&quot; -eq 0 ] || [ &quot;$is_erlc&quot; -eq 0 ] \
-    || [ &quot;$is_grep&quot; -eq 0 ] #do we need sed ?
+    || [ &quot;$is_grep&quot; -eq 0 ] 
 then
 	echo &quot;Required support (minimum) not found, exiting ...&quot;
     exit 1
@@ -432,8 +442,16 @@ function get_jenkins_cli()
 		echo &quot;Java not found ...&quot;
 	else
     	cd $WORKSPACE/ft_bin/
-		wget http://jenkins.lip6.fr/jnlpJars/jenkins-cli.jar
-		java -jar jenkins-cli.jar -s http://jenkins.lip6.fr/ who-am-i
+        if [ &quot;$is_wget&quot; -eq 1 ]
+        then
+			wget http://jenkins.lip6.fr:8080/jnlpJars/jenkins-cli.jar
+            java -jar jenkins-cli.jar -s http://jenkins.lip6.fr:8080/ who-am-i
+        elif [ &quot;$is_curl&quot; -eq 1 ]
+        then
+        	curl -o jenkins-cli.jar http://jenkins.lip6.fr:8080/jnlpJars/jenkins-cli.jar
+            curl http://vipintm:f199943ba62f911bcbde326c9f29a2e2@jenkins.lip6.fr:8080/
+        	java -jar jenkins-cli.jar -s http://jenkins.lip6.fr:8080/ who-am-i
+        fi
         cd $WORKSPACE
     fi
 }
@@ -441,8 +459,6 @@ function get_jenkins_cli()
 
 # Collect time
 SDATE=$(local_time_fn)
-echo &quot;build_time=$SDATE&quot; &gt;&gt; $exportPopertyFile
-echo &quot;git_max_log=$git_max_log&quot; &gt;&gt; $exportPopertyFile
 
 gen_git_prv_key
 gen_git_pub_key
@@ -452,6 +468,9 @@ get_jenkins_cli
 set_path_chmod
 
 clean_old_logs
+
+echo &quot;build_time=$SDATE&quot; &gt;&gt; $exportPopertyFile
+echo &quot;git_max_log=$git_max_log&quot; &gt;&gt; $exportPopertyFile
 
 # setup antinode
 cd $WORKSPACE/antidote/ # Nevr remove this the script need 
@@ -960,17 +979,19 @@ echo $CSV_DATA &gt;&gt; $code_histroy/antidote/$antidote_name/tResults.csv
 echo $CSV_DATA &gt;&gt; $code_histroy/antidote/AgResults.csv
 
 ft_antidote_merge=&quot;&quot;
-antidote_merge=$(git log --merges -n 1 | head -1 | cut -d&quot; &quot; -f2)
-if [ &quot;$antidote_merge&quot; -eq &quot;$antidote_HEAD&quot; ]
-then
- 	echo &quot;This commit is a merge ...&quot;
-    ft_antidote_merge=&quot;This commit was a Merge.&quot;
+if [ &quot;$is_git&quot; -eq 1 ] ; then
+	antidote_merge=$(git log --merges -n 1 | head -1 | cut -d&quot; &quot; -f2)	
+	if [ &quot;$antidote_merge&quot; == &quot;$antidote_HEAD&quot; ]
+	then
+ 		echo &quot;This commit is a merge ...&quot;
+    	ft_antidote_merge=&quot;This commit was a Merge.&quot;
+	fi
 fi
 
 # Push to  env
 
 #
-echo &quot;$ft_antidote_merge=$ft_antidote_merge&quot; &gt;&gt; $exportPopertyFile
+echo &quot;ft_antidote_merge=$ft_antidote_merge&quot; &gt;&gt; $exportPopertyFile
 echo &quot;ft_riak_change_log=$ft_riak_change_log&quot; &gt;&gt; $exportPopertyFile
 echo &quot;ft_antidote_change_log=$ft_antidote_change_log&quot; &gt;&gt; $exportPopertyFile
 
@@ -1008,14 +1029,21 @@ echo &quot;ft_blame_email=$ft_blame_email&quot; &gt;&gt; $exportPopertyFile
 
 # Test code
 tmp_ft_cc_email=&quot;&quot;
-tmp_ft_cc_email=$(echo $ft_cc_email | sed &quot;s/,/\n/g&quot;)
-for temp_email in $(echo $ft_blame_email | sed &quot;s/,/ /g&quot;)
-do
-    tmp_ft_cc_email=$(echo $tmp_ft_cc_email | sed &quot;s/ /\n/g&quot; | grep -v $temp_email)
-done
+if [ -z $ft_blame_email ]
+then
+	tmp_ft_cc_email=&quot;&quot;
+else
+	tmp_ft_cc_email=$(echo $ft_cc_email | sed &quot;s/,/ /g&quot;)
+	for temp_email in $(echo $ft_blame_email | sed &quot;s/,/ /g&quot;)
+	do
+    	tmp_ft_cc_email=$(echo $tmp_ft_cc_email | sed &quot;s/ /\n/g&quot; | grep -v $temp_email)
+        echo $tmp_ft_cc_email
+	done
 
-ft_cc_email=$(echo $tmp_ft_cc_email | sed -e &quot;s/ /\n/g&quot; | sed -e &apos;s/^/cc:/&apos; | perl -pe&apos;chomp, s/$/,/ unless eof&apos;)
-echo &quot;ft_cc_emaill=$ft_cc_email&quot;
+	echo $tmp_ft_cc_email
+	ft_cc_email=$(echo $tmp_ft_cc_email | sed -e &quot;s/ /\n/g&quot; | sed -e &apos;s/^/cc:/&apos; | perl -pe&apos;chomp, s/$/,/ unless eof&apos;)
+	echo &quot;ft_cc_emaill=$ft_cc_email&quot;
+fi
 
 # 
 ft_thisBuild=&quot;&quot;
@@ -1034,11 +1062,11 @@ then
         echo &quot;$ft_thisBuildfCount&quot; &gt; $code_histroy/antidote/$antidote_name/fCount    
     	ft_thisBuild=&quot;The overall test status is changed from PASSED to FAILED&quot;
         ft_RedAlert=&quot;WARNING : Latest code changes made tests to fail.&quot;
-    	cp $code_histroy/antidote/$antidote_name/sBuild $code_histroy/antidote/$antidote_name/lsBuild
+    	mv $code_histroy/antidote/$antidote_name/sBuild $code_histroy/antidote/$antidote_name/lsBuild
 
     elif [ -f $code_histroy/antidote/$antidote_name/fBuild ]
     then
-    	if [ -f code_histroy/antidote/$antidote_name/fCount ] 
+    	if [ -f $code_histroy/antidote/$antidote_name/fCount ] 
         then
         	ft_thisBuildfCount=$(cat $code_histroy/antidote/$antidote_name/fCount)
             if [[ $ft_thisBuildfCount =~ $numre ]]
@@ -1052,9 +1080,7 @@ then
         fi
         echo &quot;$ft_thisBuildfCount&quot; &gt; $code_histroy/antidote/$antidote_name/fCount    
     	ft_thisBuild=&quot;The overall test status is still FAILED (last $ft_thisBuildfCount)&quot;
-        ft_RedAlert=&quot;&quot;    	
-        cp $code_histroy/antidote/$antidote_name/fBuild $code_histroy/antidote/$antidote_name/lfBuild
-        
+        ft_RedAlert=&quot;&quot;    	       
     else
     	ft_thisBuild=&quot;The overall test status is FAILED (from unknown / first time)&quot;
         ft_RedAlert=&quot;&quot;     
@@ -1080,7 +1106,7 @@ else
         echo &quot;$ft_thisBuildsCount&quot; &gt; $code_histroy/antidote/$antidote_name/sCount     
     	ft_thisBuild=&quot;The overall test status is changed from FAILED to PASSED&quot;
         ft_RedAlert=&quot;Latest code changes made tests to pass.&quot;      
-    	cp $code_histroy/antidote/$antidote_name/fBuild $code_histroy/antidote/$antidote_name/lfBuild
+    	mv $code_histroy/antidote/$antidote_name/fBuild $code_histroy/antidote/$antidote_name/lfBuild
         
     elif [ -f $code_histroy/antidote/$antidote_name/sBuild ]
     then
@@ -1098,9 +1124,7 @@ else
         fi
         echo &quot;$ft_thisBuildsCount&quot; &gt; $code_histroy/antidote/$antidote_name/sCount      
     	ft_thisBuild=&quot;The overall test status is still PASSED (last $ft_thisBuildsCount)&quot;
-        ft_RedAlert=&quot;&quot;     
-        cp $code_histroy/antidote/$antidote_name/sBuild $code_histroy/antidote/$antidote_name/lsBuild
-     
+        ft_RedAlert=&quot;&quot;          
     else
     	ft_thisBuild=&quot;The overall test status is PASSED (from unknown / first time)&quot;
         ft_RedAlert=&quot;&quot;     
@@ -1215,10 +1239,10 @@ then
         	echo &quot;Unable to parse error info, refer the build log ($BUILD_URL)&quot;
             echo &quot;Unable to parse error info, refer the build log ($BUILD_URL)&quot; &gt;&gt; $ft_error_log
         else
-			#echo -e &quot;Error : ${failed_errors[$loop_cnt]}&quot;
-            echo -e &quot;Error : ${ft_fuc_errors[$loop_cnt]}&quot;
-            #echo -e &quot;Error : ${failed_errors[$loop_cnt]}&quot; &gt;&gt; $ft_error_log
-            echo -e &quot;Error : ${ft_fuc_errors[$loop_cnt]}&quot; &gt;&gt; $ft_error_log
+			echo -e &quot;Error : ${failed_errors[$loop_cnt]}&quot;
+            #echo -e &quot;Error : ${ft_fuc_errors[$loop_cnt]}&quot;
+            echo -e &quot;Error : ${failed_errors[$loop_cnt]}&quot; &gt;&gt; $ft_error_log
+            #echo -e &quot;Error : ${ft_fuc_errors[$loop_cnt]}&quot; &gt;&gt; $ft_error_log
         fi
         echo &quot;&quot; 
         echo &quot;&quot; &gt;&gt; $ft_error_log
@@ -1302,7 +1326,8 @@ fi
             <body>### Summary
 Result : $build_exit_code
 $ft_thisBuild
-$ft_RedAlert $ft_antidote_merge
+$ft_RedAlert 
+$ft_antidote_merge
 
 ### antidote riak test
 Total tests      : $test_cnt
@@ -1352,7 +1377,8 @@ git log ( max last $git_max_log | from last successful tested point) :  antidote
             <body>### Summary
 Result : $build_exit_code
 $ft_thisBuild
-$ft_RedAlert $ft_antidote_merge
+$ft_RedAlert 
+$ft_antidote_merge
 
 ### antidote riak test
 Total tests      : $test_cnt
@@ -1367,7 +1393,7 @@ Code change : $antidote_branch_changed ( from last successful test )
 Commit          : https://github.com/SyncFree/antidote/commit/$antidote_GIT_COMMIT
 Build               : $antidote_BUILD_URL ( $antidote_BUILD_NUMBER )
 # History
-Test status     : $antidote_branch_history ($lastKnownBuild)
+Test status     : $antidote_branch_history (Last successful build : $lastKnownBuild)
 $lastKnownGitAs
 $ft_antidote_change_log
 
@@ -1425,7 +1451,7 @@ git log ( max last $git_max_log | from last successful tested point)  : antidote
       <compressBuildLog>false</compressBuildLog>
       <replyTo></replyTo>
       <saveOutput>true</saveOutput>
-      <disabled>false</disabled>
+      <disabled>true</disabled>
     </hudson.plugins.emailext.ExtendedEmailPublisher>
   </publishers>
   <buildWrappers/>
