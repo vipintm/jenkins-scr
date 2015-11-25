@@ -444,11 +444,11 @@ function clean_old_logs()
 		echo &quot;Creating bin dir ...&quot;
 		mkdir $WORKSPACE/ft_bin
 	fi
-    if [ -f $WORKSPACE/Failure*.txt ] ; then
-    	echo &quot;Cleaning old Failure/Success emails ...&quot;
-        rm -rf $WORKSPACE/Failure*.txt
-        rm -rf $WORKSPACE/Success*.txt
-    fi
+    
+  	echo &quot;Cleaning old Failure/Success emails ...&quot;
+    rm -rf $WORKSPACE/Failure*.txt
+    rm -rf $WORKSPACE/Success*.txt
+    
     # exit 1
 	echo &quot;ft_BUILD_RESULT=FAILED&quot; &gt; $exportBuildFile
 	echo &quot;ft_BUILD_NUMBER=$BUILD_NUMBER&quot; &gt;&gt; $exportBuildFile
