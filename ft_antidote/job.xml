@@ -117,7 +117,7 @@ error_cc=&quot;Unable to get Code change information&quot;
 error_parse=&quot;Unable to Parse&quot;
 error_na=&quot;NA&quot;
 error_email=&quot;vipintm@gmail.com&quot; # debug email id
-ft_cc_email=&quot;vipintm@gmail.com,alejandro.tomsic@lip6.fr,bieniusa@cs.uni-kl.de,mars.leezm@gmail.com,tyler.crain@lip6.fr,akkoorath@cs.uni-kl.de&quot;
+ft_cc_email=&quot;vipintm@gmail.com,alejandro.tomsic@lip6.fr,bieniusa@cs.uni-kl.de,mars.leezm@gmail.com,tyler.crain@lip6.fr,deepthidevaki@gmail.com&quot;
 numre=&apos;^[0-9]+$&apos;
 
 # files
@@ -170,6 +170,9 @@ mak_dev_nos=6
 conf_dev_nos=0
 
 # requirment test -1
+echo &quot;&quot;
+echo $log_sep
+echo &quot;&quot;
 echo &quot;Env &amp; version ...&quot;
 echo &quot;&quot;
 echo &quot;PATH = $PATH&quot;
@@ -488,6 +491,10 @@ set_path_chmod
 
 clean_old_logs
 
+echo &quot;&quot;
+echo $log_sep
+echo &quot;&quot;
+
 echo &quot;build_time=$SDATE&quot; &gt;&gt; $exportPopertyFile
 echo &quot;git_max_log=$git_max_log&quot; &gt;&gt; $exportPopertyFile
 echo &quot;error_email=$error_email&quot; &gt;&gt; $exportPopertyFile
@@ -522,7 +529,13 @@ else
     fi
 fi
 
+
 # create link to rt
+
+echo &quot;&quot;
+echo $log_sep
+echo &quot;&quot;
+
 if [ -d $WORKSPACE/rt_link ]
 then
 	echo &quot;rt link is present ...&quot;
@@ -753,11 +766,11 @@ as it exceeded maximum run time($max_time sec)&quot;
         	if [ &quot;$is_perl&quot; -eq 1 ]; then
         		failed_errors[test_failed_cnt]=$(cat $test_logf \
             		2&gt;/dev/null | perl -ne \
-            		&apos;print &quot;$1\n&quot; if /(?&lt;=$fn_test-error: fail &lt;&lt;&quot;)(.+?)(?=&quot;&gt;&gt;)/&apos; \
+            		&apos;print &quot;$1\n&quot; if /(?&lt;=$fn_test-error: fail &lt;&lt;&quot;{)(.+?)(?=}&quot;&gt;&gt;)/&apos; \
                     | perl -pe &apos;s/&gt;/ /g&apos; | perl -pe &apos;s/&lt;/ /g&apos;)
                 ft_fuc_errors[test_failed_cnt]=$(cat $test_logf \
             		2&gt;/dev/null | perl -ne \
-            		&apos;print &quot;$1\n&quot; if /(?&lt;=$fn_test-error: fail &lt;&lt;&quot;)(.+?)(?=&quot;&gt;&gt;)/&apos;)
+            		&apos;print &quot;$1\n&quot; if /(?&lt;=$fn_test-error: fail &lt;&lt;&quot;{)(.+?)(?=}&quot;&gt;&gt;)/&apos;)
             elif [ &quot;$is_awk&quot; -eq 1 ]; then
             	failed_errors[test_failed_cnt]=$(cat $test_logf \
             		2&gt;/dev/null | awk -v \
@@ -860,25 +873,28 @@ cat &gt; $utest_file &lt;&lt; EOL
 EOL
 		echo &quot;The test is failed save dev/*/log/*.* logs ...&quot;
 		echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+        echo &quot;$log_sep&quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+        echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
     	echo &quot;$log_sep&quot;
     	echo &quot;## Test : $fn_test&quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
+        echo &quot;$log_sep&quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
 		for name_dev in $(ls -d -1 $rt_dev_loc/*)
     	do
     		if [ -d $name_dev ]
         	then
         		echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
             	echo &quot;Files from : $name_dev &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
-            	echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
         		for name_dev_log in $(ls -1 $name_dev/log/*.*)
             	do
+                	echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
                 	echo &quot;File name : $name_dev_log&quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
                 	echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
                 	cat $name_dev_log &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
-                	echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
         		done
+                echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
     		fi
      	done
-	
+        echo &quot; &quot; &gt;&gt; $WORKSPACE/tlog/ft_test_dev_logs.log
 	fi 
 
     if [ -f  $utest_file ]
@@ -1015,11 +1031,16 @@ echo &quot;ft_antidote_merge=$ft_antidote_merge&quot; &gt;&gt; $exportPopertyFil
 echo &quot;ft_riak_change_log=$ft_riak_change_log&quot; &gt;&gt; $exportPopertyFile
 echo &quot;ft_antidote_change_log=$ft_antidote_change_log&quot; &gt;&gt; $exportPopertyFile
 
-echo &quot;Changes riak git url : $ft_riak_change_log&quot;
-echo &quot;Changes antidote git url : $ft_antidote_change_log&quot;
+echo &quot;Changes riak git url : $ft_riak_change_log &quot;
+
+echo &quot;Changes antidote git url : $ft_antidote_change_log &quot;
 
 #
 echo &quot;lastKnownGitAs=$lastKnownGitAs&quot; &gt;&gt; $exportPopertyFile
+
+echo &quot;&quot;
+echo $log_sep
+echo &quot;&quot;
 
 #
 if [ &quot;$error_email&quot; != &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; != &quot;$riak_blame_email&quot; ]
@@ -1367,6 +1388,7 @@ Branch           : $antidote_branch
 Commit          : https://github.com/SyncFree/antidote/commit/$antidote_GIT_COMMIT
 Code change : $antidote_branch_changed ( from last successful test )
 Build              : $antidote_BUILD_URL ($antidote_BUILD_NUMBER)
+
 # History
 Test status     : $antidote_branch_history
 $ft_antidote_change_log
@@ -1377,6 +1399,7 @@ Branch           : $riak_branch
 Commit          : https://github.com/SyncFree/riak_test/commit/$riak_GIT_COMMIT
 Code change : $riak_branch_changed ( from last successful test )
 Build              : $riak_BUILD_URL ( $riak_BUILD_NUMBER )
+
 # History
 Test status     : $riak_branch_history
 $ft_riak_change_log
@@ -1394,7 +1417,7 @@ git log ( max last $git_max_log | from last successful tested point) :  antidote
             <attachmentsPattern>ft_send/*.txt</attachmentsPattern>
             <attachBuildLog>true</attachBuildLog>
             <compressBuildLog>false</compressBuildLog>
-            <replyTo>$ft_blame_email, $ft_cc_email</replyTo>
+            <replyTo>$ft_blame_email, $ft_cc_email, $error_email</replyTo>
             <contentType>text/plain</contentType>
           </email>
         </hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
@@ -1420,6 +1443,7 @@ Branch           : $antidote_branch
 Code change : $antidote_branch_changed ( from last successful test )
 Commit          : https://github.com/SyncFree/antidote/commit/$antidote_GIT_COMMIT
 Build               : $antidote_BUILD_URL ( $antidote_BUILD_NUMBER )
+
 # History
 Test status     : $antidote_branch_history (Last successful build : $lastKnownBuild)
 $lastKnownGitAs
@@ -1427,10 +1451,12 @@ $ft_antidote_change_log
 
 ### riak_test
 # For this test
+
 Branch           : $riak_branch
 Commit          : https://github.com/SyncFree/riak_test/commit/$riak_GIT_COMMIT
 Code change : $riak_branch_changed ( from last successful test )
 Build              : $riak_BUILD_URL ( $riak_BUILD_NUMBER )
+
 # History
 Test status     : $riak_branch_history
 $ft_riak_change_log
@@ -1450,7 +1476,7 @@ git log ( max last $git_max_log | from last successful tested point)  : antidote
             <attachmentsPattern>ft_send/*.txt</attachmentsPattern>
             <attachBuildLog>true</attachBuildLog>
             <compressBuildLog>false</compressBuildLog>
-            <replyTo>$ft_blame_email, $ft_cc_email</replyTo>
+            <replyTo>$ft_blame_email, $ft_cc_email, $error_email</replyTo>
             <contentType>text/plain</contentType>
           </email>
         </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
