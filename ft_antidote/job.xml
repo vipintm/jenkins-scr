@@ -5,7 +5,7 @@
   <logRotator class="hudson.tasks.LogRotator">
     <daysToKeep>-1</daysToKeep>
     <numToKeep>20</numToKeep>
-    <artifactDaysToKeep>1</artifactDaysToKeep>
+    <artifactDaysToKeep>-1</artifactDaysToKeep>
     <artifactNumToKeep>-1</artifactNumToKeep>
   </logRotator>
   <keepDependencies>false</keepDependencies>
@@ -125,6 +125,8 @@ riakbin=&quot;$WORKSPACE/riak_test/riak_test&quot;
 test_cases=&quot;$WORKSPACE/antidote/riak_test/*.erl&quot;
 antidote_bin=&quot;$HOME/rt/antidote/current/dev/dev*/bin/antidote&quot;
 riak_configf=&quot;$HOME/.riak_test.config&quot;
+RTEE_DEST_DIR=&quot;$HOME/rt/antidote&quot;
+ANTIDOTE_DIR=&quot;$WORKSPACE/antidote&quot;
 git_prv_key=&quot;$HOME/.git.prv.dsa&quot;
 git_pub_key=&quot;$HOME/.git.pub.dsa&quot;
 antidote_current=&quot;$WORKSPACE/antidote/riak_test/bin/antidote-current.sh&quot;
@@ -377,6 +379,7 @@ function gen_riak_config()
     {rt_project, &quot;antidote&quot;},
     {cluster_a_size, 3},
     {num_nodes, $dev_nos},
+    {num_vnodes, 8},
     {exec_name, &quot;antidote&quot;},
     {rt_cookie, antidote},
     {test_paths, [&quot;$WORKSPACE/antidote/riak_test/ebin&quot;]},
@@ -398,6 +401,22 @@ EOL
       echo &quot;&quot;
 	fi
 
+}
+
+# generate riak config file
+function copy_riak_config()
+{
+  echo &quot;TEST : Creating $HOME/.riak_test.config&quot;
+  cp -f $WORKSPACE/antidote/riak_test/bin/.riak_test.config $riak_configf
+  sed -i &apos;&apos; -e &quot;s#TESTS_PATH#$ANTIDOTE_DIR\/riak_test#g&quot; -e &quot;s#RTDEV_PATH#$RTEE_DEST_DIR#g&quot; $riak_configf
+  if [ &quot;$?&quot; -eq &quot;0&quot; ]
+  then
+      echo &quot;&quot;
+      cat $riak_configf
+      echo &quot;&quot;
+  else
+      gen_riak_config
+  fi
 }
 
 # dir chmod
@@ -486,6 +505,9 @@ SDATE=$(local_time_fn)
 #gen_git_pub_key
 
 # get_jenkins_cli
+
+# This is a Test
+copy_riak_config
 
 set_path_chmod
 
@@ -1451,7 +1473,6 @@ $ft_antidote_change_log
 
 ### riak_test
 # For this test
-
 Branch           : $riak_branch
 Commit          : https://github.com/SyncFree/riak_test/commit/$riak_GIT_COMMIT
 Code change : $riak_branch_changed ( from last successful test )
