@@ -163,6 +163,7 @@ declare -a ft_fuc_errors
 
 # git max log
 git_max_log=&quot;15&quot;
+git_max_blame=&quot;50&quot;
 # Time out
 max_time=3600 #in seconds
 # dev nos
@@ -1004,7 +1005,7 @@ then
         	echo &quot;Change Log (last $git_max_log) :&quot; &gt; $antidote_log
             echo &quot; &quot; &gt;&gt; $antidote_log
         	git log -n$git_max_log &gt;&gt; $antidote_log
-            antidote_blame_email=$(git log -n$git_max_log \
+            antidote_blame_email=$(git log -n$git_max_blame \
             | grep -i -o &apos;[A-Z0-9._%+-]\+@[A-Z0-9.-]\+\.[A-Z]\{2,4\}&apos; \
             | sort -u | perl -pe&apos;chomp, s/$/,/ unless eof&apos;)
         fi
