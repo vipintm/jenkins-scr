@@ -934,6 +934,7 @@ done
 # Collecting Code Change information
 #
 ft_riak_change_log=&quot;&quot;
+riak_blame_one=&quot;Unknown&quot;
 echo &quot;&quot;
 echo $log_sep
 echo &quot;Code change info ...&quot;
@@ -943,6 +944,8 @@ then
 	if [ &quot;$is_git&quot; -eq 1 ] ; then
     	echo &quot;Found code diffrance (b:$riak_name) for riak ...&quot;
     	cd $WORKSPACE/riak_test
+        riak_blame_one=$(git log -n1 \
+            | grep -i -o &apos;[A-Z0-9._%+-]\+@[A-Z0-9.-]\+\.[A-Z]\{2,4\}&apos;)
         if [ &quot;$error_na&quot; != &quot;$riak_HEAD_old&quot; ]
         then
         	echo &quot;Generating code diff info from last successful test ...&quot;
@@ -958,7 +961,7 @@ then
         	echo &quot;Change Log (last $git_max_log) :&quot; &gt; $riak_log
             echo &quot; &quot; &gt;&gt; $riak_log
    			git log -n$git_max_log &gt;&gt; $riak_log
-            riak_blame_email=$(git log -n$git_max_log \
+            riak_blame_email=$(git log -n$git_max_blame \
             | grep -i -o &apos;[A-Z0-9._%+-]\+@[A-Z0-9.-]\+\.[A-Z]\{2,4\}&apos; \
             | sort -u | perl -pe&apos;chomp, s/$/,/ unless eof&apos;)
         fi
@@ -984,12 +987,15 @@ fi
 ft_antidote_change_log=&quot;&quot;
 temp_lastKnownGitAs=&quot;&quot;
 lastKnownGitAs=&quot;&quot;
+antidote_blame_one=&quot;Unknown&quot;
 antidote_log=&quot;$WORKSPACE/tlog/antidote_git_change.log&quot;
 if [ &quot;$antidote_HEAD&quot; != &quot;$antidote_HEAD_old&quot; ]
 then
     if [ &quot;$is_git&quot; -eq 1 ] ; then
     	echo &quot;Found code difference (b:$antidote_name) for antidote ...&quot;
     	cd $WORKSPACE/antidote
+        antidote_blame_one=$(git log -n1 \
+            | grep -i -o &apos;[A-Z0-9._%+-]\+@[A-Z0-9.-]\+\.[A-Z]\{2,4\}&apos;)
         if [ &quot;$error_na&quot; != &quot;$antidote_HEAD_old&quot; ]
         then
         	echo &quot;Generating code diff info from last successful test ...&quot;
@@ -1069,18 +1075,22 @@ echo &quot;&quot;
 if [ &quot;$error_email&quot; != &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; != &quot;$riak_blame_email&quot; ]
 then
 	ft_blame_email=&quot;$antidote_blame_email,$riak_blame_email&quot;
+    ft_blame_one=&quot;$antidote_blame_one,$riak_blame_one&quot;
     
 elif [ &quot;$error_email&quot; == &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; != &quot;$riak_blame_email&quot; ]
 then
 	ft_blame_email=&quot;$riak_blame_email&quot;
+    ft_blame_one=&quot;$riak_blame_one&quot;
     
 elif [ &quot;$error_email&quot; != &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; == &quot;$riak_blame_email&quot; ]
 then
 	ft_blame_email=&quot;$antidote_blame_email&quot;
+    ft_blame_one=&quot;$antidote_blame_one&quot;
     
 elif [ &quot;$error_email&quot; == &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; == &quot;$riak_blame_email&quot; ]
 then
 	ft_blame_email=&quot;$error_email&quot;
+    ft_blame_one=&quot;Unknown&quot;
     
 else
 	echo &quot;Unable to find upstream commiters email &quot;
@@ -1090,6 +1100,7 @@ fi
 
 echo &quot;upstream commiters email : $ft_blame_email&quot;
 echo &quot;ft_blame_email=$ft_blame_email&quot; &gt;&gt; $exportPopertyFile
+echo &quot;ft_blame_one=$ft_blame_one&quot; &gt;&gt; $exportPopertyFile
 
 # Test code
 tmp_ft_cc_email=&quot;&quot;
@@ -1133,7 +1144,7 @@ then
         ft_thisBuildfCount=&quot;1&quot;
         echo &quot;$ft_thisBuildfCount&quot; &gt; $code_histroy/antidote/$antidote_name/fCount    
     	ft_thisBuild=&quot;The overall test status is changed from PASSED to FAILED&quot;
-        ft_RedAlert=&quot;WARNING : Latest code changes made tests to fail.&quot;
+        ft_RedAlert=&quot;WARNING : Latest code changes (by $ft_blame_one) made tests to fail.&quot;
     	mv $code_histroy/antidote/$antidote_name/sBuild $code_histroy/antidote/$antidote_name/lsBuild
 
     elif [ -f $code_histroy/antidote/$antidote_name/fBuild ]
@@ -1177,7 +1188,7 @@ else
         ft_thisBuildsCount=&quot;1&quot;
         echo &quot;$ft_thisBuildsCount&quot; &gt; $code_histroy/antidote/$antidote_name/sCount     
     	ft_thisBuild=&quot;The overall test status is changed from FAILED to PASSED&quot;
-        ft_RedAlert=&quot;Latest code changes made tests to pass.&quot;      
+        ft_RedAlert=&quot;Latest code changes (by $ft_blame_one) made tests to pass.&quot;      
     	mv $code_histroy/antidote/$antidote_name/fBuild $code_histroy/antidote/$antidote_name/lfBuild
         
     elif [ -f $code_histroy/antidote/$antidote_name/sBuild ]
