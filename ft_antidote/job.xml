@@ -2,12 +2,6 @@
 <project>
   <actions/>
   <description>antidote riak tests</description>
-  <logRotator class="hudson.tasks.LogRotator">
-    <daysToKeep>-1</daysToKeep>
-    <numToKeep>20</numToKeep>
-    <artifactDaysToKeep>-1</artifactDaysToKeep>
-    <artifactNumToKeep>-1</artifactNumToKeep>
-  </logRotator>
   <keepDependencies>false</keepDependencies>
   <properties>
     <hudson.security.AuthorizationMatrixProperty>
@@ -15,9 +9,17 @@
       <permission>hudson.model.Item.Discover:anonymous</permission>
       <permission>hudson.model.Item.Workspace:anonymous</permission>
     </hudson.security.AuthorizationMatrixProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
     <hudson.model.ParametersDefinitionProperty>
       <parameterDefinitions>
-        <org.jvnet.jenkins.plugins.nodelabelparameter.NodeParameterDefinition plugin="nodelabelparameter@1.5.1">
+        <org.jvnet.jenkins.plugins.nodelabelparameter.NodeParameterDefinition plugin="nodelabelparameter@1.7.1">
           <name></name>
           <description></description>
           <allowedSlaves>
@@ -55,7 +57,13 @@ then
 fi
 
 code_histroy=&quot;$HOME/.code_histroy&quot;
-
+if [ -d $HOME/.code_histroy ]
+then
+	echo &quot;Test history found ...&quot;
+else
+	echo &quot;ERROR : Test history lost ...&quot;
+    exit 1
+fi
 
 #clean old files
 if [ -d $WORKSPACE/riak_test ]
@@ -71,7 +79,7 @@ fi
 
 </command>
     </hudson.tasks.Shell>
-    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.36.1">
+    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.37">
       <project>riak_test</project>
       <filter>**</filter>
       <target>riak_test</target>
@@ -79,10 +87,11 @@ fi
       <selector class="hudson.plugins.copyartifact.TriggeredBuildSelector">
         <fallbackToLastSuccessful>true</fallbackToLastSuccessful>
         <upstreamFilterStrategy>UseNewest</upstreamFilterStrategy>
+        <allowUpstreamDependencies>false</allowUpstreamDependencies>
       </selector>
       <doNotFingerprintArtifacts>false</doNotFingerprintArtifacts>
     </hudson.plugins.copyartifact.CopyArtifact>
-    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.36.1">
+    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.37">
       <project>antidote</project>
       <filter>**</filter>
       <target>antidote</target>
@@ -90,6 +99,7 @@ fi
       <selector class="hudson.plugins.copyartifact.TriggeredBuildSelector">
         <fallbackToLastSuccessful>true</fallbackToLastSuccessful>
         <upstreamFilterStrategy>UseNewest</upstreamFilterStrategy>
+        <allowUpstreamDependencies>false</allowUpstreamDependencies>
       </selector>
       <doNotFingerprintArtifacts>false</doNotFingerprintArtifacts>
     </hudson.plugins.copyartifact.CopyArtifact>
@@ -1049,7 +1059,7 @@ if [ &quot;$is_git&quot; -eq 1 ] ; then
 	if [ &quot;$antidote_merge&quot; == &quot;$antidote_HEAD&quot; ]
 	then
  		echo &quot;This commit is a merge ...&quot;
-    	ft_antidote_merge=&quot;This commit was a Merge.&quot;
+    	ft_antidote_merge=&quot;Last commit to antidote was a Merge.&quot;
 	fi
 fi
 
@@ -1155,14 +1165,16 @@ then
             if [[ $ft_thisBuildfCount =~ $numre ]]
             then
         		ft_thisBuildfCount=$((ft_thisBuildfCount+1))
+                ft_thisBuild=&quot;The overall test status is still FAILED (last $ft_thisBuildfCount)&quot;
             else
             	ft_thisBuildfCount=&quot;1&quot;
+                ft_thisBuild=&quot;The overall test status is FAILED &quot;
             fi
         else
         	ft_thisBuildfCount=&quot;1&quot;
+            ft_thisBuild=&quot;The overall test status is FAILED &quot;
         fi
-        echo &quot;$ft_thisBuildfCount&quot; &gt; $code_histroy/antidote/$antidote_name/fCount    
-    	ft_thisBuild=&quot;The overall test status is still FAILED (last $ft_thisBuildfCount)&quot;
+        echo &quot;$ft_thisBuildfCount&quot; &gt; $code_histroy/antidote/$antidote_name/fCount
         ft_RedAlert=&quot;&quot;    	       
     else
     	ft_thisBuild=&quot;The overall test status is FAILED (from unknown / first time)&quot;
@@ -1199,14 +1211,16 @@ else
             if [[ $ft_thisBuildsCount =~ $numre ]]
             then
         		ft_thisBuildsCount=$((ft_thisBuildsCount+1))
+                ft_thisBuild=&quot;The overall test status is still PASSED (last $ft_thisBuildsCount)&quot;
             else
             	ft_thisBuildsCount=&quot;1&quot;
+                ft_thisBuild=&quot;The overall test status is PASSED &quot;
             fi
         else
         	ft_thisBuildsCount=&quot;1&quot;
+            ft_thisBuild=&quot;The overall test status is PASSED &quot;
         fi
-        echo &quot;$ft_thisBuildsCount&quot; &gt; $code_histroy/antidote/$antidote_name/sCount      
-    	ft_thisBuild=&quot;The overall test status is still PASSED (last $ft_thisBuildsCount)&quot;
+        echo &quot;$ft_thisBuildsCount&quot; &gt; $code_histroy/antidote/$antidote_name/sCount
         ft_RedAlert=&quot;&quot;          
     else
     	ft_thisBuild=&quot;The overall test status is PASSED (from unknown / first time)&quot;
@@ -1391,13 +1405,14 @@ fi
     </hudson.tasks.Shell>
   </builders>
   <publishers>
-    <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.9">
+    <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.10">
       <testResults>utest/Test-*.xml</testResults>
       <keepLongStdio>false</keepLongStdio>
       <testDataPublishers>
         <de.esailors.jenkins.teststability.StabilityTestDataPublisher plugin="test-stability@1.0"/>
       </testDataPublishers>
       <healthScaleFactor>1.0</healthScaleFactor>
+      <allowEmptyResults>false</allowEmptyResults>
     </hudson.tasks.junit.JUnitResultArchiver>
     <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.40.5">
       <recipientList></recipientList>
