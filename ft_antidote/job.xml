@@ -577,6 +577,16 @@ else
 	rm $WORKSPACE/rt_link 2&gt; /dev/null
 	ln -s $HOME/rt $WORKSPACE/rt_link
 fi
+
+if [ -d $WORKSPACE/res_antidote ]
+then
+	echo &quot;res_antidote is present ...&quot;
+else
+	echo &quot;Linking res_antidote for web access ...&quot;
+	rm $WORKSPACE/res_antidote 2&gt; /dev/null
+	ln -s $code_histroy/antidote $WORKSPACE/res_antidote
+fi
+
 rt_dev_loc=&quot;$HOME/rt/antidote/current/dev&quot;
 echo &quot; &quot; &gt; $WORKSPACE/tlog/ft_test_dev_logs.log
 
@@ -1253,6 +1263,7 @@ echo &quot;This state build : $ft_thisBuildCount&quot;
 test_failed_name=$(IFS=, ; echo &quot;${failed_fns[*]}&quot;)
 echo &quot;test_failed_name=$test_failed_name&quot; &gt;&gt; $exportPopertyFile
 
+
 # Summary
 echo &quot;&quot;
 echo &quot;&quot;
@@ -1318,6 +1329,8 @@ then
 	echo &quot;No of tests failed  :$test_failed_cnt&quot;
     echo &quot;test_failed_cnt=$test_failed_cnt&quot; &gt;&gt; $exportPopertyFile
     cp $WORKSPACE/tlog/ft_test_dev_logs.log $WORKSPACE/ft_send/dev_logs.txt
+    echo &quot;$BUILD_NUMBER,$test_failed_name&quot; &gt;&gt; $code_histroy/antidote/$antidote_name/test_failed_name.csv
+    echo &quot;$BUILD_NUMBER,$test_failed_name&quot; &gt;&gt; $code_histroy/antidote/test_failed_name_all.csv
     loop_cnt=0
     echo &quot;&quot;
     echo $log_sep
@@ -1414,7 +1427,7 @@ fi
       <healthScaleFactor>1.0</healthScaleFactor>
       <allowEmptyResults>false</allowEmptyResults>
     </hudson.tasks.junit.JUnitResultArchiver>
-    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.40.5">
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.41.2">
       <recipientList></recipientList>
       <configuredTriggers>
         <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
