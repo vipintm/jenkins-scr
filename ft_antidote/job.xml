@@ -1059,7 +1059,7 @@ else
     antidote_blame_email=&quot;$error_email&quot;
 fi
 
-CSV_DATA=&quot;$BUILD_NUMBER,$test_cnt,$test_pass_cnt,$test_failed_cnt,$SDATE&quot;
+CSV_DATA=&quot;$BUILD_NUMBER,$test_cnt,$test_pass_cnt,$test_failed_cnt,$SDATE,$riak_name,$antidote_name&quot;
 echo $CSV_DATA &gt;&gt; $code_histroy/antidote/$antidote_name/tResults.csv
 echo $CSV_DATA &gt;&gt; $code_histroy/antidote/AgResults.csv
 
@@ -1069,7 +1069,7 @@ if [ &quot;$is_git&quot; -eq 1 ] ; then
 	if [ &quot;$antidote_merge&quot; == &quot;$antidote_HEAD&quot; ]
 	then
  		echo &quot;This commit is a merge ...&quot;
-    	ft_antidote_merge=&quot;Last commit to antidote was a Merge.&quot;
+    	ft_antidote_merge=&quot;Last commit to antidote branch $antidote_name was a Merge.&quot;
 	fi
 fi
 
@@ -1418,7 +1418,7 @@ fi
     </hudson.tasks.Shell>
   </builders>
   <publishers>
-    <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.10">
+    <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.11">
       <testResults>utest/Test-*.xml</testResults>
       <keepLongStdio>false</keepLongStdio>
       <testDataPublishers>
@@ -1427,7 +1427,7 @@ fi
       <healthScaleFactor>1.0</healthScaleFactor>
       <allowEmptyResults>false</allowEmptyResults>
     </hudson.tasks.junit.JUnitResultArchiver>
-    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.41.2">
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.41.3">
       <recipientList></recipientList>
       <configuredTriggers>
         <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
