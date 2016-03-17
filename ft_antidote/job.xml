@@ -168,6 +168,7 @@ test_pass_cnt=0
 test_failed_cnt=0
 test_cnt=0
 declare -a failed_fns
+declare -a pass_fns
 declare -a failed_errors
 declare -a ft_fuc_errors
 
@@ -417,7 +418,7 @@ EOL
 # generate riak config file
 function copy_riak_config()
 {
-  echo &quot;TEST : Creating $HOME/.riak_test.config&quot;
+  echo &quot;Creating $HOME/.riak_test.config&quot;
   cp -f $WORKSPACE/antidote/riak_test/bin/.riak_test.config $riak_configf
   sed -i &apos;&apos; -e &quot;s#TESTS_PATH#$ANTIDOTE_DIR\/riak_test#g&quot; -e &quot;s#RTDEV_PATH#$RTEE_DEST_DIR#g&quot; $riak_configf
   if [ &quot;$?&quot; -eq &quot;0&quot; ]
@@ -791,6 +792,7 @@ do
     then
         echo &quot;The test is detected as passed[$test_pass]&quot;
         test_pass_cnt=$((test_pass_cnt+1))
+        pass_fns[test_pass_cnt]=&quot;$fn_test &quot;
     elif [ -f $test_logf ] &amp;&amp; [ &quot;$test_pass&quot; -eq 0 ] &amp;&amp; [ &quot;$test_fail&quot; -eq 1 ]
     then
     	echo &quot;The test is detected as failed[$test_pass]&quot;
@@ -1092,6 +1094,8 @@ echo $log_sep
 echo &quot;&quot;
 
 #
+ft_blame_one=&quot;Unknown&quot;
+
 if [ &quot;$error_email&quot; != &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; != &quot;$riak_blame_email&quot; ]
 then
 	ft_blame_email=&quot;$antidote_blame_email,$riak_blame_email&quot;
@@ -1176,19 +1180,22 @@ then
             then
         		ft_thisBuildfCount=$((ft_thisBuildfCount+1))
                 ft_thisBuild=&quot;The overall test status is still FAILED (last $ft_thisBuildfCount)&quot;
+                ft_RedAlert=&quot;Latest code changes by $ft_blame_one.&quot;
             else
             	ft_thisBuildfCount=&quot;1&quot;
                 ft_thisBuild=&quot;The overall test status is FAILED &quot;
+                ft_RedAlert=&quot;Latest code changes by $ft_blame_one&quot;
             fi
         else
         	ft_thisBuildfCount=&quot;1&quot;
             ft_thisBuild=&quot;The overall test status is FAILED &quot;
+            ft_RedAlert=&quot;Latest code changes by $ft_blame_one&quot;
         fi
         echo &quot;$ft_thisBuildfCount&quot; &gt; $code_histroy/antidote/$antidote_name/fCount
         ft_RedAlert=&quot;&quot;    	       
     else
     	ft_thisBuild=&quot;The overall test status is FAILED (from unknown / first time)&quot;
-        ft_RedAlert=&quot;&quot;     
+        ft_RedAlert=&quot;Latest code changes by $ft_blame_one&quot;    
         ft_thisBuildfCount=&quot;1&quot;
         echo &quot;$ft_thisBuildfCount&quot; &gt; $code_histroy/antidote/$antidote_name/fCount
         
@@ -1222,19 +1229,22 @@ else
             then
         		ft_thisBuildsCount=$((ft_thisBuildsCount+1))
                 ft_thisBuild=&quot;The overall test status is still PASSED (last $ft_thisBuildsCount)&quot;
+                ft_RedAlert=&quot;Latest code changes by $ft_blame_one&quot;
             else
             	ft_thisBuildsCount=&quot;1&quot;
                 ft_thisBuild=&quot;The overall test status is PASSED &quot;
+                ft_RedAlert=&quot;Latest code changes by $ft_blame_one&quot;
             fi
         else
         	ft_thisBuildsCount=&quot;1&quot;
             ft_thisBuild=&quot;The overall test status is PASSED &quot;
+            ft_RedAlert=&quot;Latest code changes by $ft_blame_one&quot;
         fi
         echo &quot;$ft_thisBuildsCount&quot; &gt; $code_histroy/antidote/$antidote_name/sCount
         ft_RedAlert=&quot;&quot;          
     else
     	ft_thisBuild=&quot;The overall test status is PASSED (from unknown / first time)&quot;
-        ft_RedAlert=&quot;&quot;     
+        ft_RedAlert=&quot;Latest code changes by $ft_blame_one&quot;     
         ft_thisBuildsCount=&quot;1&quot;
         echo &quot;$ft_thisBuildsCount&quot; &gt; $code_histroy/antidote/$antidote_name/sCount
         
@@ -1262,7 +1272,8 @@ echo &quot;This state build : $ft_thisBuildCount&quot;
 #
 test_failed_name=$(IFS=, ; echo &quot;${failed_fns[*]}&quot;)
 echo &quot;test_failed_name=$test_failed_name&quot; &gt;&gt; $exportPopertyFile
-
+test_pass_name=$(IFS=, ; echo &quot;${pass_fns[*]}&quot;)
+echo &quot;test_pass_name=$test_pass_name&quot; &gt;&gt; $exportPopertyFile
 
 # Summary
 echo &quot;&quot;
@@ -1321,7 +1332,6 @@ fi
 echo &quot;Total no of tests   :$test_cnt&quot; 
 echo &quot;test_cnt=$test_cnt&quot; &gt;&gt; $exportPopertyFile
 echo &quot;No of tests passed  :$test_pass_cnt&quot;
-echo &quot;test_cnt=$test_cnt&quot; &gt;&gt; $exportPopertyFile
 echo &quot;test_pass_cnt=$test_pass_cnt&quot; &gt;&gt; $exportPopertyFile
 
 if [ &quot;$test_pass_cnt&quot; -ne &quot;$test_cnt&quot; ]
@@ -1331,6 +1341,8 @@ then
     cp $WORKSPACE/tlog/ft_test_dev_logs.log $WORKSPACE/ft_send/dev_logs.txt
     echo &quot;$BUILD_NUMBER,$test_failed_name&quot; &gt;&gt; $code_histroy/antidote/$antidote_name/test_failed_name.csv
     echo &quot;$BUILD_NUMBER,$test_failed_name&quot; &gt;&gt; $code_histroy/antidote/test_failed_name_all.csv
+    echo &quot;$BUILD_NUMBER,$test_pass_name&quot; &gt;&gt; $code_histroy/antidote/$antidote_name/test_pass_name.csv
+    echo &quot;$BUILD_NUMBER,$test_pass_name&quot; &gt;&gt; $code_histroy/antidote/test_pass_name_all.csv    
     loop_cnt=0
     echo &quot;&quot;
     echo $log_sep
@@ -1502,7 +1514,7 @@ Failed tests    : $test_failed_name
 ### antidote
 # For this test
 Branch           : $antidote_branch
-Code change : $antidote_branch_changed ( from last successful test )
+Code change : $antidote_branch_changed ( from last test )
 Commit          : https://github.com/SyncFree/antidote/commit/$antidote_GIT_COMMIT
 Build               : $antidote_BUILD_URL ( $antidote_BUILD_NUMBER )
 
@@ -1515,7 +1527,7 @@ $ft_antidote_change_log
 # For this test
 Branch           : $riak_branch
 Commit          : https://github.com/SyncFree/riak_test/commit/$riak_GIT_COMMIT
-Code change : $riak_branch_changed ( from last successful test )
+Code change : $riak_branch_changed ( from last test )
 Build              : $riak_BUILD_URL ( $riak_BUILD_NUMBER )
 
 # History
