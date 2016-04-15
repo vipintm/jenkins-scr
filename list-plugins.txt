@@ -1,7 +1,7 @@
-git                       Git plugin                           2.4.2
+git                       Git plugin                           2.4.4
 cvs                       CVS Plug-in                          2.12
 external-monitor-job      External Monitor Job Type Plugin     1.4
-credentials               Credentials Plugin                   1.25
+credentials               Credentials Plugin                   1.27
 ant                       Ant Plugin                           1.2
 ssh-credentials           SSH Credentials Plugin               1.11
 test-stability            Test stability history               1.0
@@ -11,8 +11,8 @@ matrix-project            Matrix Project Plugin                1.6
 antisamy-markup-formatter OWASP Markup Formatter Plugin        1.3
 windows-slaves            Windows Slaves Plugin                1.1
 subversion                Subversion Plug-in                   2.5.7
-script-security           Script Security Plugin               1.17
-nodelabelparameter        Node and Label parameter plugin      1.7.1
+script-security           Script Security Plugin               1.18
+nodelabelparameter        Node and Label parameter plugin      1.7.2
 icon-shim                 Icon Shim Plugin                     2.0.3
 mailer                    Mailer Plugin                        1.16
 ldap                      LDAP Plugin                          1.11
