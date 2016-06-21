@@ -19,7 +19,7 @@
     </jenkins.model.BuildDiscarderProperty>
     <hudson.model.ParametersDefinitionProperty>
       <parameterDefinitions>
-        <org.jvnet.jenkins.plugins.nodelabelparameter.NodeParameterDefinition plugin="nodelabelparameter@1.7.1">
+        <org.jvnet.jenkins.plugins.nodelabelparameter.NodeParameterDefinition plugin="nodelabelparameter@1.7.2">
           <name></name>
           <description></description>
           <allowedSlaves>
@@ -79,7 +79,7 @@ fi
 
 </command>
     </hudson.tasks.Shell>
-    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.37">
+    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.38">
       <project>riak_test</project>
       <filter>**</filter>
       <target>riak_test</target>
@@ -91,7 +91,7 @@ fi
       </selector>
       <doNotFingerprintArtifacts>false</doNotFingerprintArtifacts>
     </hudson.plugins.copyartifact.CopyArtifact>
-    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.37">
+    <hudson.plugins.copyartifact.CopyArtifact plugin="copyartifact@1.38">
       <project>antidote</project>
       <filter>**</filter>
       <target>antidote</target>
@@ -1113,13 +1113,14 @@ then
     
 elif [ &quot;$error_email&quot; == &quot;$antidote_blame_email&quot; ] &amp;&amp; [ &quot;$error_email&quot; == &quot;$riak_blame_email&quot; ]
 then
-	ft_blame_email=&quot;$error_email&quot;
+	echo &quot;Unable to find upstream commiters email, sending TO all ...&quot;
+	ft_blame_email=&quot;$ft_cc_email&quot;
     ft_blame_one=&quot;Unknown&quot;
     
 else
 	echo &quot;Unable to find upstream commiters email &quot;
-    echo &quot;or there is no change from last sucessful test ...&quot;
-    ft_blame_email=&quot;$error_email&quot;
+    echo &quot;or there is no change from last sucessful test, sending TO all ...&quot;
+    ft_blame_email=&quot;$ft_cc_email&quot;
 fi
 
 echo &quot;upstream commiters email : $ft_blame_email&quot;
@@ -1430,7 +1431,7 @@ fi
     </hudson.tasks.Shell>
   </builders>
   <publishers>
-    <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.11">
+    <hudson.tasks.junit.JUnitResultArchiver plugin="junit@1.13">
       <testResults>utest/Test-*.xml</testResults>
       <keepLongStdio>false</keepLongStdio>
       <testDataPublishers>
@@ -1439,7 +1440,7 @@ fi
       <healthScaleFactor>1.0</healthScaleFactor>
       <allowEmptyResults>false</allowEmptyResults>
     </hudson.tasks.junit.JUnitResultArchiver>
-    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.41.3">
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.44">
       <recipientList></recipientList>
       <configuredTriggers>
         <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
@@ -1574,6 +1575,7 @@ git log ( max last $git_max_log | from last successful tested point)  : antidote
       <defaultContent></defaultContent>
       <attachmentsPattern></attachmentsPattern>
       <presendScript></presendScript>
+      <postsendScript></postsendScript>
       <attachBuildLog>true</attachBuildLog>
       <compressBuildLog>false</compressBuildLog>
       <replyTo></replyTo>
